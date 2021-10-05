@@ -102,3 +102,14 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Lock files
+package-lock.json
+
+# Truffle
+truffle-config.js
+build/*
+!build/.gitkeep
+
+# Client
+client/config.json
