@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "openzeppelin-solidity/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./ERC20DynamicCap.sol";
 
@@ -33,7 +32,7 @@ import "./ERC20DynamicCap.sol";
  * - pausable
  * - blocking/unblocking accounts
  */
-contract ThriveCoinERC20Token is ERC20Burnable, ERC20Pausable, ERC20DynamicCap, Ownable {
+contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, Ownable {
   uint8 private _decimals;
 
   /**
@@ -51,7 +50,7 @@ contract ThriveCoinERC20Token is ERC20Burnable, ERC20Pausable, ERC20DynamicCap, 
     uint8 decimals_,
     uint256 totalSupply_,
     uint256 cap_
-  ) ERC20(name_, symbol_) ERC20DynamicCap(cap_) {
+  ) ERC20PresetMinterPauser(name_, symbol_) ERC20DynamicCap(cap_) {
     _setupDecimals(decimals_);
     _mint(owner(), totalSupply_);
   }
@@ -70,16 +69,19 @@ contract ThriveCoinERC20Token is ERC20Burnable, ERC20Pausable, ERC20DynamicCap, 
   }
 
   /**
-   * @dev Creates `amount` new tokens for `account`.
-   *
-   * See {ERC20-_mint}.
-   *
-   * Requirements:
-   *
-   * - the caller must be owner.
+   * @dev See {ERC20-increaseAllowance}.
    */
-  function mint(address account, uint256 amount) external virtual onlyOwner {
-    _mint(account, amount); // TODO: Grant mint access to swap smart contracts
+  function increaseAllowance(address spender, uint256 addedValue) public virtual override returns (bool) {
+    require(addedValue > 0, "ThriveCoinERC20Token: added value should be greater than zero");
+    return super.increaseAllowance(spender, addedValue);
+  }
+
+  /**
+   * @dev See {ERC20-decreaseAllowance}.
+   */
+  function decreaseAllowance(address spender, uint256 subtractedValue) public virtual override returns (bool) {
+    require(subtractedValue > 0, "ThriveCoinERC20Token: subtracted value should be greater than zero");
+    return super.decreaseAllowance(spender, subtractedValue);
   }
 
   /**
@@ -90,14 +92,26 @@ contract ThriveCoinERC20Token is ERC20Burnable, ERC20Pausable, ERC20DynamicCap, 
   }
 
   /**
-   * @dev See {ERC20Pausable-_mint}.
+   * @dev See {ERC20-_transfer}.
+   */
+  function _transfer(
+    address sender,
+    address recipient,
+    uint256 amount
+  ) internal virtual override {
+    require(amount > 0, "ThriveCoinERC20Token: amount should be greater than zero");
+    super._transfer(sender, recipient, amount);
+  }
+
+  /**
+   * @dev See {ERC20PresetMinterPauser-_mint}.
    */
   function _beforeTokenTransfer(
     address from,
     address to,
     uint256 amount
-  ) internal virtual override(ERC20, ERC20Pausable) {
-    ERC20Pausable._beforeTokenTransfer(from, to, amount);
+  ) internal virtual override(ERC20, ERC20PresetMinterPauser) {
+    ERC20PresetMinterPauser._beforeTokenTransfer(from, to, amount);
   }
 
   /**
