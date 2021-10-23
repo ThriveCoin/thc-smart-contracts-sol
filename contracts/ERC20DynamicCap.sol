@@ -27,12 +27,20 @@ abstract contract ERC20DynamicCap is ERC20 {
   }
 
   /**
+   * @dev Decreases total supply cap
+   */
+  function decreaseCap(uint256 cap_) external virtual {
+    _updateCap(cap_);
+  }
+
+  /**
    * @dev Sets the value of the `cap`. This value can only be decreased
    * further, it can't be increased
    */
   function _updateCap(uint256 cap_) internal virtual {
     require(cap_ > 0, "ERC20DynamicCap: cap cannot be 0");
     require(cap_ < cap(), "ERC20DynamicCap: cap can only be decreased");
+    require(cap_ >= totalSupply(), "ERC20DynamicCap: cap cannot be less than total supply");
     _cap = cap_;
   }
 
