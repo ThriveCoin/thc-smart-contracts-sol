@@ -9,10 +9,9 @@ module.exports = function (deployer, network, accounts) {
       name_: 'ThriveCoin',
       symbol_: 'THC',
       decimals_: 8,
-      totalSupply_: 10000000
+      totalSupply_: '1000000000',
+      cap_: '1000000000'
     }
-
-    console.log(config)
 
     deployer.deploy(
       ThriveCoinERC20Token,
