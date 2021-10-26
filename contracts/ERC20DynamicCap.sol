@@ -29,7 +29,7 @@ abstract contract ERC20DynamicCap is ERC20 {
   /**
    * @dev Decreases total supply cap
    */
-  function updateCap(uint256 cap_) external virtual {
+  function updateCap(uint256 cap_) public virtual {
     _updateCap(cap_);
   }
 

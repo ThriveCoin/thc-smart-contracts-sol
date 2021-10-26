@@ -139,9 +139,29 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, Ownab
   }
 
   /**
+   * @dev See {ERC20-_approve}.
+   */
+  function _approve(
+    address owner,
+    address spender,
+    uint256 amount
+  ) internal virtual override {
+    require(!paused(), "ThriveCoinERC20Token: approve balance while paused");
+    super._approve(owner, spender, amount);
+  }
+
+  /**
    * @dev See {ERC20DynamicCap-_mint}.
    */
   function _mint(address account, uint256 amount) internal virtual override(ERC20, ERC20DynamicCap) {
     ERC20DynamicCap._mint(account, amount);
+  }
+
+  /**
+   * @dev See {ERC20DynamicCap-_updateCap}
+   */
+  function _updateCap(uint256 cap_) internal virtual override {
+    require(!paused(), "ThriveCoinERC20Token: update cap while paused");
+    super._updateCap(cap_);
   }
 }
