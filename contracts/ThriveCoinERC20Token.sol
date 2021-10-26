@@ -85,6 +85,22 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, Ownab
   }
 
   /**
+   * @dev See {ERC20Burnable-_burn}.
+   */
+  function burn(uint256 amount) public virtual override {
+    require(amount > 0, "ThriveCoinERC20Token: burned amount should be greater than zero");
+    super.burn(amount);
+  }
+
+  /**
+   * @dev See {ERC20Burnable-burnFrom}
+   */
+  function burnFrom(address account, uint256 amount) public virtual override {
+    require(amount > 0, "ThriveCoinERC20Token: burned amount should be greater than zero");
+    super.burnFrom(account, amount);
+  }
+
+  /**
    * @dev Sets the value of `_decimals` field
    */
   function _setupDecimals(uint8 decimals_) internal virtual {
