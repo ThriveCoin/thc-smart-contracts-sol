@@ -83,6 +83,15 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('tranfer should fail when amount is negative', async () => {
+      try {
+        await contract.transfer(accounts[1], -100, { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(err.message.includes('value out-of-bounds'), true)
+      }
+    })
+
     it('allowance returns amount allowed by user to spend on behalf', async () => {
       await contract.approve(accounts[2], 50, { from: accounts[0] })
 
@@ -127,6 +136,15 @@ describe('ThriveCoinERC20Token', () => {
 
       const allowance = await contract.allowance.call(accounts[0], accounts[2])
       assert.strictEqual(allowance.toNumber(), 0)
+    })
+
+    it('approve should fail when amount is negative', async () => {
+      try {
+        await contract.approve(ADDRESS_ZERO, -50, { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(err.message.includes('value out-of-bounds'), true)
+      }
     })
 
     it('transferFrom should move funds on behalf of the account', async () => {
@@ -179,6 +197,16 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('transferFrom should fail when amount is negative', async () => {
+      try {
+        await contract.approve(accounts[1], 20, { from: accounts[0] })
+        await contract.transferFrom(accounts[0], accounts[1], -30, { from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(err.message.includes('value out-of-bounds'), true)
+      }
+    })
+
     it('increaseAllowance should increase existing allowance', async () => {
       await contract.increaseAllowance(accounts[1], 35, { from: accounts[0] })
 
@@ -205,6 +233,15 @@ describe('ThriveCoinERC20Token', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(err.message.includes('ThriveCoinERC20Token: added value should be greater than zero'), true)
+      }
+    })
+
+    it('increaseAllowance should fail when amount is negative', async () => {
+      try {
+        await contract.increaseAllowance(accounts[1], -30, { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(err.message.includes('value out-of-bounds'), true)
       }
     })
 
@@ -235,6 +272,17 @@ describe('ThriveCoinERC20Token', () => {
       } catch (err) {
         assert.strictEqual(
           err.message.includes('ThriveCoinERC20Token: subtracted value should be greater than zero'), true
+        )
+      }
+    })
+
+    it('decreaseAllowance should fail when amount is negative', async () => {
+      try {
+        await contract.decreaseAllowance(accounts[1], -30, { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('value out-of-bounds'), true
         )
       }
     })

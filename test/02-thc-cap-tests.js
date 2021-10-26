@@ -51,6 +51,17 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('cap update should be reject on negative amount', async () => {
+      try {
+        await contract.updateCap(-100, { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('value out-of-bounds'), true
+        )
+      }
+    })
+
     it('cap decrease should override value, not substract it', async () => {
       await contract.burn(70000, { from: accounts[0] })
       await contract.updateCap(999997000, { from: accounts[0] })
