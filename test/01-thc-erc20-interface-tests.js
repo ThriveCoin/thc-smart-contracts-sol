@@ -187,6 +187,18 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('transferFrom should fail when amount does not exceed allowance but exceeds balance', async () => {
+      try {
+        await contract.transfer(accounts[3], 300, { from: accounts[0] })
+        await contract.approve(accounts[2], 300, { from: accounts[3] })
+        await contract.transfer(accounts[0], 200, { from: accounts[3] })
+        await contract.transferFrom(accounts[3], accounts[0], 200, { from: accounts[2] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(err.message.includes('ERC20: transfer amount exceeds balance'), true)
+      }
+    })
+
     it('transferFrom should fail when amount is zero', async () => {
       try {
         await contract.approve(accounts[1], 20, { from: accounts[0] })
