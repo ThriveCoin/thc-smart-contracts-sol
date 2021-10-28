@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "openzeppelin-solidity/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./ERC20DynamicCap.sol";
+import "./ERC20Blockable.sol";
 
 /**
  * @dev Implementation of the THC ERC20 Token.
@@ -32,7 +33,7 @@ import "./ERC20DynamicCap.sol";
  * - pausable
  * - blocking/unblocking accounts
  */
-contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, Ownable {
+contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, Ownable {
   uint8 private _decimals;
 
   /**
@@ -106,6 +107,39 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, Ownab
   function mint(address to, uint256 amount) public virtual override {
     require(amount > 0, "ThriveCoinERC20Token: minted amount should be greater than zero");
     super.mint(to, amount);
+  }
+
+  /**
+   * @dev See {ERC20DynamicCap-updateCap}
+   */
+  function updateCap(uint256 cap_) public virtual override {
+    require(
+      hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+      "ThriveCoinERC20Token: caller must have admin role to update cap"
+    );
+    super.updateCap(cap_);
+  }
+
+  /**
+   * @dev See {ERC20Blockable-_blockAccount}
+   */
+  function blockAccount(address account) public virtual returns (bool) {
+    require(
+      hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+      "ThriveCoinERC20Token: caller must have admin role to block the user"
+    );
+    return _blockAccount(account);
+  }
+
+  /**
+   * @dev See {ERC20Blockable-_unblockAccount}
+   */
+  function unblockAccount(address account) public virtual returns (bool) {
+    require(
+      hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
+      "ThriveCoinERC20Token: caller must have admin role to unblock the user"
+    );
+    return _unblockAccount(account);
   }
 
   /**
