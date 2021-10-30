@@ -123,23 +123,23 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   /**
    * @dev See {ERC20Blockable-_blockAccount}
    */
-  function blockAccount(address account) public virtual returns (bool) {
+  function blockAccount(address account) public virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to block the user"
     );
-    return _blockAccount(account);
+    _blockAccount(account);
   }
 
   /**
    * @dev See {ERC20Blockable-_unblockAccount}
    */
-  function unblockAccount(address account) public virtual returns (bool) {
+  function unblockAccount(address account) public virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to unblock the user"
     );
-    return _unblockAccount(account);
+    _unblockAccount(account);
   }
 
   /**
@@ -168,8 +168,8 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
     address from,
     address to,
     uint256 amount
-  ) internal virtual override(ERC20, ERC20PresetMinterPauser) {
-    ERC20PresetMinterPauser._beforeTokenTransfer(from, to, amount);
+  ) internal virtual override(ERC20, ERC20PresetMinterPauser, ERC20Blockable) {
+    super._beforeTokenTransfer(from, to, amount);
   }
 
   /**
@@ -179,7 +179,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
     address owner,
     address spender,
     uint256 amount
-  ) internal virtual override {
+  ) internal virtual override(ERC20, ERC20Blockable) {
     require(!paused(), "ThriveCoinERC20Token: approve balance while paused");
     super._approve(owner, spender, amount);
   }

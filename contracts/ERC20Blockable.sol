@@ -30,26 +30,22 @@ abstract contract ERC20Blockable is ERC20 {
    * @dev Blocks the account, if account is already blocked returns `false`
    * otherwise returns `true`
    */
-  function _blockAccount(address account) internal virtual returns (bool) {
-    if (isAccountBlocked(account)) return false;
+  function _blockAccount(address account) internal virtual {
+    require(!isAccountBlocked(account), "ERC20Blockable: account is already blocked");
 
     _blockedAccounts[account] = true;
     emit AccountBlocked(account, block.timestamp);
-
-    return true;
   }
 
   /**
    * @dev Unblocks the account, if account is not blocked returns `false`
    * otherwise returns `true`
    */
-  function _unblockAccount(address account) internal virtual returns (bool) {
-    if (!isAccountBlocked(account)) return false;
+  function _unblockAccount(address account) internal virtual {
+    require(isAccountBlocked(account), "ERC20Blockable: account is not blocked");
 
     _blockedAccounts[account] = false;
     emit AccountUnblocked(account, block.timestamp);
-
-    return true;
   }
 
   /**
@@ -62,6 +58,7 @@ abstract contract ERC20Blockable is ERC20 {
   ) internal virtual override {
     require(!isAccountBlocked(from), "ERC20Blockable: sender account should be not be blocked");
     require(!isAccountBlocked(to), "ERC20Blockable: receiver account should be not be blocked");
+    require(!isAccountBlocked(_msgSender()), "ERC20Blockable: caller account should be not be blocked");
     super._beforeTokenTransfer(from, to, amount);
   }
 
@@ -75,6 +72,7 @@ abstract contract ERC20Blockable is ERC20 {
   ) internal virtual override {
     require(!isAccountBlocked(owner), "ERC20Blockable: owner account should be not be blocked");
     require(!isAccountBlocked(spender), "ERC20Blockable: spender account should be not be blocked");
+    require(!isAccountBlocked(_msgSender()), "ERC20Blockable: caller account should be not be blocked");
     super._approve(owner, spender, amount);
   }
 }
