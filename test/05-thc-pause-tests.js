@@ -18,6 +18,22 @@ describe('ThriveCoinERC20Token', () => {
       await contract.pause({ from: accounts[0] })
     })
 
+    it('unpause should emit Unpaused event', async () => {
+      const res = await contract.unpause({ from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Unpaused')
+      assert.strictEqual(txLog.args.account, accounts[0])
+    })
+
+    it('pause should emit Paused event', async () => {
+      const res = await contract.pause({ from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Paused')
+      assert.strictEqual(txLog.args.account, accounts[0])
+    })
+
     it('transfer should fail when paused', async () => {
       try {
         await contract.transfer(accounts[1], 10, { from: accounts[0] })
@@ -137,6 +153,18 @@ describe('ThriveCoinERC20Token', () => {
 
     it('renounceRole should work when paused', async () => {
       await contract.renounceRole(MINTER_ROLE, accounts[2], { from: accounts[2] })
+    })
+
+    it('block should work when paused', async () => {
+      await contract.blockAccount(accounts[1], { from: accounts[0] })
+      const blocked = await contract.isAccountBlocked.call(accounts[1])
+      assert.strictEqual(blocked, true)
+    })
+
+    it('unblock should work when paused', async () => {
+      await contract.unblockAccount(accounts[1], { from: accounts[0] })
+      const blocked = await contract.isAccountBlocked.call(accounts[1])
+      assert.strictEqual(blocked, false)
     })
   })
 })
