@@ -112,11 +112,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   /**
    * @dev See {ERC20DynamicCap-updateCap}
    */
-  function updateCap(uint256 cap_) public virtual override {
-    require(
-      hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-      "ThriveCoinERC20Token: caller must have admin role to update cap"
-    );
+  function updateCap(uint256 cap_) public virtual override onlyOwner {
     super.updateCap(cap_);
   }
 
@@ -126,7 +122,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   function blockAccount(address account) public virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-      "ThriveCoinERC20Token: caller must have admin role to block the user"
+      "ThriveCoinERC20Token: caller must have admin role to block the account"
     );
     _blockAccount(account);
   }
@@ -137,9 +133,30 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   function unblockAccount(address account) public virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
-      "ThriveCoinERC20Token: caller must have admin role to unblock the user"
+      "ThriveCoinERC20Token: caller must have admin role to unblock the account"
     );
     _unblockAccount(account);
+  }
+
+  /**
+   * @dev See {AccessControlEnumerable-grantRole}
+   */
+  function grantRole(bytes32 role, address account) public virtual override {
+    require(
+      role == DEFAULT_ADMIN_ROLE || role == MINTER_ROLE || role == PAUSER_ROLE,
+      "ThriveCoinERC20Token: requested role is not supported"
+    );
+    super.grantRole(role, account);
+  }
+
+  /**
+   * @dev See {Ownable-transferOwnership}
+   */
+  function transferOwnership(address newOwner) public virtual override onlyOwner {
+    super.transferOwnership(newOwner);
+    _setupRole(DEFAULT_ADMIN_ROLE, newOwner);
+    _setupRole(MINTER_ROLE, newOwner);
+    _setupRole(PAUSER_ROLE, newOwner);
   }
 
   /**
