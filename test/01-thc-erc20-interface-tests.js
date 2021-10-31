@@ -195,7 +195,7 @@ describe('ThriveCoinERC20Token', () => {
         await contract.transferFrom(accounts[3], accounts[0], 200, { from: accounts[2] })
         throw new Error('Should not reach here')
       } catch (err) {
-        assert.strictEqual(err.message.includes('ERC20: transfer amount exceeds balance'), true)
+        assert.strictEqual(err.message.includes('ERC20LockedFunds: amount exceeds balance allowed to be spent'), true)
       }
     })
 

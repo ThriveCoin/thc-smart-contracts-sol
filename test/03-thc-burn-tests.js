@@ -56,7 +56,7 @@ describe('ThriveCoinERC20Token', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
-          err.message.includes('ERC20: burn amount exceeds balance'),
+          err.message.includes('ERC20LockedFunds: amount exceeds balance allowed to be spent'),
           true
         )
       }
@@ -146,7 +146,7 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('burnFrom should fail when amount is greater than balance but not greater than allowance', async () => {
+    it('burnFrom should fail when amount is greater than allowance but not greater than balance', async () => {
       try {
         await contract.transfer(accounts[3], 300, { from: accounts[0] })
         await contract.approve(accounts[2], 300, { from: accounts[3] })
@@ -155,7 +155,21 @@ describe('ThriveCoinERC20Token', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
-          err.message.includes('ERC20: burn amount exceeds balance'),
+          err.message.includes('ERC20LockedFunds: amount exceeds balance allowed to be spent'),
+          true
+        )
+      }
+    })
+
+    it('burnFrom should fail when amount is greater than balance but not greater than allowance', async () => {
+      try {
+        await contract.transfer(accounts[3], 100, { from: accounts[0] })
+        await contract.approve(accounts[2], 20, { from: accounts[3] })
+        await contract.burnFrom(accounts[3], 200, { from: accounts[2] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ERC20: burn amount exceeds allowance'),
           true
         )
       }
