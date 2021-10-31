@@ -5,6 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/presets/ERC20PresetMinterPau
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "./ERC20DynamicCap.sol";
 import "./ERC20Blockable.sol";
+import "./ERC20LockedFunds.sol";
 
 /**
  * @dev Implementation of the THC ERC20 Token.
@@ -33,7 +34,7 @@ import "./ERC20Blockable.sol";
  * - pausable
  * - blocking/unblocking accounts
  */
-contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, Ownable {
+contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, ERC20LockedFunds, Ownable {
   uint8 private _decimals;
 
   /**
@@ -179,13 +180,13 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20PresetMinterPauser-_mint}.
+   * @dev See {ERC20-_beforeTokenTransfer}.
    */
   function _beforeTokenTransfer(
     address from,
     address to,
     uint256 amount
-  ) internal virtual override(ERC20, ERC20PresetMinterPauser, ERC20Blockable) {
+  ) internal virtual override(ERC20, ERC20PresetMinterPauser, ERC20Blockable, ERC20LockedFunds) {
     super._beforeTokenTransfer(from, to, amount);
   }
 
