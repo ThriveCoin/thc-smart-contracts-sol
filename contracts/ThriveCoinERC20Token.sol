@@ -168,18 +168,6 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20-_transfer}.
-   */
-  function _transfer(
-    address sender,
-    address recipient,
-    uint256 amount
-  ) internal virtual override {
-    require(amount > 0, "ThriveCoinERC20Token: amount should be greater than zero");
-    super._transfer(sender, recipient, amount);
-  }
-
-  /**
    * @dev See {ERC20-_beforeTokenTransfer}.
    */
   function _beforeTokenTransfer(

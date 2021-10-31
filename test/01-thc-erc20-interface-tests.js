@@ -74,13 +74,22 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('tranfer should fail when amount is zero', async () => {
-      try {
-        await contract.transfer(accounts[1], 0, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(err.message.includes('ThriveCoinERC20Token: amount should be greater than zero'), true)
-      }
+    it('tranfer should not fail when amount is zero', async () => {
+      const acc0BalBefore = await contract.balanceOf.call(accounts[0])
+      const acc1BalBefore = await contract.balanceOf.call(accounts[1])
+
+      const res = await contract.transfer(accounts[1], 0, { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      const acc0BalAfter = await contract.balanceOf.call(accounts[0])
+      const acc1BalAfter = await contract.balanceOf.call(accounts[1])
+
+      assert.strictEqual(txLog.event, 'Transfer')
+      assert.strictEqual(txLog.args.from, accounts[0])
+      assert.strictEqual(txLog.args.to, accounts[1])
+      assert.strictEqual(txLog.args.value.toNumber(), 0)
+      assert.strictEqual(acc0BalBefore.toNumber(), acc0BalAfter.toNumber())
+      assert.strictEqual(acc1BalBefore.toNumber(), acc1BalAfter.toNumber())
     })
 
     it('tranfer should fail when amount is negative', async () => {
@@ -199,14 +208,23 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('transferFrom should fail when amount is zero', async () => {
-      try {
-        await contract.approve(accounts[1], 20, { from: accounts[0] })
-        await contract.transferFrom(accounts[0], accounts[1], 0, { from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(err.message.includes('ThriveCoinERC20Token: amount should be greater than zero'), true)
-      }
+    it('transferFrom should not fail when amount is zero', async () => {
+      const acc0BalBefore = await contract.balanceOf.call(accounts[0])
+      const acc1BalBefore = await contract.balanceOf.call(accounts[1])
+
+      await contract.approve(accounts[1], 20, { from: accounts[0] })
+      const res = await contract.transferFrom(accounts[0], accounts[1], 0, { from: accounts[1] })
+      const txLog = res.logs[0]
+
+      const acc0BalAfter = await contract.balanceOf.call(accounts[0])
+      const acc1BalAfter = await contract.balanceOf.call(accounts[1])
+
+      assert.strictEqual(txLog.event, 'Transfer')
+      assert.strictEqual(txLog.args.from, accounts[0])
+      assert.strictEqual(txLog.args.to, accounts[1])
+      assert.strictEqual(txLog.args.value.toNumber(), 0)
+      assert.strictEqual(acc0BalBefore.toNumber(), acc0BalAfter.toNumber())
+      assert.strictEqual(acc1BalBefore.toNumber(), acc1BalAfter.toNumber())
     })
 
     it('transferFrom should fail when amount is negative', async () => {
