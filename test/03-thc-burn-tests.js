@@ -39,15 +39,13 @@ describe('ThriveCoinERC20Token', () => {
     })
 
     it('burn should fail when amount is zero', async () => {
-      try {
-        await contract.burn(0, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: burned amount should be greater than zero'),
-          true
-        )
-      }
+      const res = await contract.burn(0, { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Transfer')
+      assert.strictEqual(txLog.args.from, accounts[0])
+      assert.strictEqual(txLog.args.to, ADDRESS_ZERO)
+      assert.strictEqual(txLog.args.value.toNumber(), 0)
     })
 
     it('burn should fail when amount is greater than balance', async () => {
@@ -123,15 +121,18 @@ describe('ThriveCoinERC20Token', () => {
     })
 
     it('burnFrom should fail when amount is zero', async () => {
-      try {
-        await contract.burnFrom(accounts[0], 0, { from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: burned amount should be greater than zero'),
-          true
-        )
-      }
+      const res = await contract.burnFrom(accounts[0], 0, { from: accounts[1] })
+      const txLogs = res.logs
+
+      assert.strictEqual(txLogs[0].event, 'Approval')
+      assert.strictEqual(txLogs[0].args.owner, accounts[0])
+      assert.strictEqual(txLogs[0].args.spender, accounts[1])
+      assert.strictEqual(txLogs[0].args.value.toNumber(), 2000)
+
+      assert.strictEqual(txLogs[1].event, 'Transfer')
+      assert.strictEqual(txLogs[1].args.from, accounts[0])
+      assert.strictEqual(txLogs[1].args.to, ADDRESS_ZERO)
+      assert.strictEqual(txLogs[1].args.value.toNumber(), 0)
     })
 
     it('burnFrom should fail when amount is negative', async () => {
