@@ -61,18 +61,4 @@ abstract contract ERC20Blockable is ERC20 {
     require(!isAccountBlocked(_msgSender()), "ERC20Blockable: caller account should be not be blocked");
     super._beforeTokenTransfer(from, to, amount);
   }
-
-  /**
-   * @dev See {ERC20-_approve}.
-   */
-  function _approve(
-    address owner,
-    address spender,
-    uint256 amount
-  ) internal virtual override {
-    require(!isAccountBlocked(owner), "ERC20Blockable: owner account should be not be blocked");
-    require(!isAccountBlocked(spender), "ERC20Blockable: spender account should be not be blocked");
-    require(!isAccountBlocked(_msgSender()), "ERC20Blockable: caller account should be not be blocked");
-    super._approve(owner, spender, amount);
-  }
 }

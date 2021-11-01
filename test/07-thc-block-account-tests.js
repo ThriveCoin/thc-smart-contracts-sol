@@ -138,7 +138,7 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('transferFrom should fail when sender is blocked', async () => {
+    it('transferFrom should fail when caller is blocked', async () => {
       try {
         await contract.transferFrom(accounts[0], accounts[2], 100, { from: accounts[1] })
         throw new Error('Should not reach here')
@@ -150,76 +150,28 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('approve should fail when owner is blocked', async () => {
-      try {
-        await contract.approve(accounts[2], 100, { from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: owner account should be not be blocked'),
-          true
-        )
-      }
+    it('approve should not fail when owner is blocked', async () => {
+      await contract.approve(accounts[2], 100, { from: accounts[1] })
     })
 
-    it('approve should fail when spender is blocked', async () => {
-      try {
-        await contract.approve(accounts[1], 100, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: spender account should be not be blocked'),
-          true
-        )
-      }
+    it('approve should not fail when spender is blocked', async () => {
+      await contract.approve(accounts[1], 100, { from: accounts[0] })
     })
 
-    it('increaseAllowance should fail when owner is blocked', async () => {
-      try {
-        await contract.increaseAllowance(accounts[2], 10, { from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: owner account should be not be blocked'),
-          true
-        )
-      }
+    it('increaseAllowance should not fail when owner is blocked', async () => {
+      await contract.increaseAllowance(accounts[2], 10, { from: accounts[1] })
     })
 
-    it('increaseAllowance should fail when spender is blocked', async () => {
-      try {
-        await contract.increaseAllowance(accounts[1], 10, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: spender account should be not be blocked'),
-          true
-        )
-      }
+    it('increaseAllowance should not fail when spender is blocked', async () => {
+      await contract.increaseAllowance(accounts[1], 10, { from: accounts[0] })
     })
 
-    it('decreaseAllowance should fail when owner is blocked', async () => {
-      try {
-        await contract.decreaseAllowance(accounts[2], 10, { from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: owner account should be not be blocked'),
-          true
-        )
-      }
+    it('decreaseAllowance should not fail when owner is blocked', async () => {
+      await contract.decreaseAllowance(accounts[2], 10, { from: accounts[1] })
     })
 
-    it('decreaseAllowance should fail when spender is blocked', async () => {
-      try {
-        await contract.decreaseAllowance(accounts[1], 10, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ERC20Blockable: spender account should be not be blocked'),
-          true
-        )
-      }
+    it('decreaseAllowance should not fail when spender is blocked', async () => {
+      await contract.decreaseAllowance(accounts[1], 10, { from: accounts[0] })
     })
 
     it('mint should fail when caller is blocked', async () => {
@@ -252,7 +204,7 @@ describe('ThriveCoinERC20Token', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
-          err.message.includes('ERC20Blockable: spender account should be not be blocked'),
+          err.message.includes('ERC20Blockable: caller account should be not be blocked'),
           true
         )
       }
