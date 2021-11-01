@@ -58,40 +58,16 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('approve should fail when paused', async () => {
-      try {
-        await contract.approve(accounts[1], 100, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: approve balance while paused'),
-          true
-        )
-      }
+    it('approve should not fail when paused', async () => {
+      await contract.approve(accounts[1], 100, { from: accounts[0] })
     })
 
-    it('increaseAllowance should fail when paused', async () => {
-      try {
-        await contract.increaseAllowance(accounts[1], 35, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: approve balance while paused'),
-          true
-        )
-      }
+    it('increaseAllowance should not fail when paused', async () => {
+      await contract.increaseAllowance(accounts[1], 35, { from: accounts[0] })
     })
 
-    it('decreaseAllowance should fail when paused', async () => {
-      try {
-        await contract.decreaseAllowance(accounts[1], 35, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: approve balance while paused'),
-          true
-        )
-      }
+    it('decreaseAllowance should not fail when paused', async () => {
+      await contract.decreaseAllowance(accounts[1], 35, { from: accounts[0] })
     })
 
     it('mint should fail when paused', async () => {
@@ -124,7 +100,7 @@ describe('ThriveCoinERC20Token', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: approve balance while paused'),
+          err.message.includes('ERC20Pausable: token transfer while paused'),
           true
         )
       }
