@@ -71,22 +71,6 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20-increaseAllowance}.
-   */
-  function increaseAllowance(address spender, uint256 addedValue) public virtual override returns (bool) {
-    require(addedValue > 0, "ThriveCoinERC20Token: added value should be greater than zero");
-    return super.increaseAllowance(spender, addedValue);
-  }
-
-  /**
-   * @dev See {ERC20-decreaseAllowance}.
-   */
-  function decreaseAllowance(address spender, uint256 subtractedValue) public virtual override returns (bool) {
-    require(subtractedValue > 0, "ThriveCoinERC20Token: subtracted value should be greater than zero");
-    return super.decreaseAllowance(spender, subtractedValue);
-  }
-
-  /**
    * @dev See {ERC20Burnable-burn}.
    */
   function burn(uint256 amount) public virtual override {

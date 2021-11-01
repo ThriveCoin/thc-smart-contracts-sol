@@ -257,13 +257,14 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(allowance.toNumber(), 60)
     })
 
-    it('increaseAllowance should fail when amount is zero', async () => {
-      try {
-        await contract.increaseAllowance(accounts[1], 0, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(err.message.includes('ThriveCoinERC20Token: added value should be greater than zero'), true)
-      }
+    it('increaseAllowance should not fail when amount is zero', async () => {
+      const res = await contract.increaseAllowance(accounts[1], 0, { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Approval')
+      assert.strictEqual(txLog.args.owner, accounts[0])
+      assert.strictEqual(txLog.args.spender, accounts[1])
+      assert.strictEqual(txLog.args.value.toNumber(), 60)
     })
 
     it('increaseAllowance should fail when amount is negative', async () => {
@@ -295,15 +296,14 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(allowance.toNumber(), 20)
     })
 
-    it('decreaseAllowance should fail when amount is zero', async () => {
-      try {
-        await contract.decreaseAllowance(accounts[1], 0, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: subtracted value should be greater than zero'), true
-        )
-      }
+    it('decreaseAllowance should not fail when amount is zero', async () => {
+      const res = await contract.decreaseAllowance(accounts[1], 0, { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Approval')
+      assert.strictEqual(txLog.args.owner, accounts[0])
+      assert.strictEqual(txLog.args.spender, accounts[1])
+      assert.strictEqual(txLog.args.value.toNumber(), 20)
     })
 
     it('decreaseAllowance should fail when amount is negative', async () => {
