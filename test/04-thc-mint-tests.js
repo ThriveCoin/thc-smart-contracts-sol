@@ -54,16 +54,14 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(balanceAcc1After.toNumber() - balanceAcc1Before.toNumber(), 0)
     })
 
-    it('mint should fail when amount is zero', async () => {
-      try {
-        await contract.mint(accounts[0], 0, { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: minted amount should be greater than zero'),
-          true
-        )
-      }
+    it('mint should not fail when amount is zero', async () => {
+      const res = await contract.mint(accounts[0], 0, { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'Transfer')
+      assert.strictEqual(txLog.args.from, ADDRESS_ZERO)
+      assert.strictEqual(txLog.args.to, accounts[0])
+      assert.strictEqual(txLog.args.value.toNumber(), 0)
     })
 
     it('mint should fail when amount is negative', async () => {

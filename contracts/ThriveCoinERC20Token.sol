@@ -71,14 +71,6 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20PresetMinterPauser-mint}
-   */
-  function mint(address to, uint256 amount) public virtual override {
-    require(amount > 0, "ThriveCoinERC20Token: minted amount should be greater than zero");
-    super.mint(to, amount);
-  }
-
-  /**
    * @dev See {ERC20DynamicCap-updateCap}
    */
   function updateCap(uint256 cap_) public virtual override onlyOwner {
