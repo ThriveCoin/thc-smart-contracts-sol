@@ -100,17 +100,6 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {AccessControlEnumerable-grantRole}
-   */
-  function grantRole(bytes32 role, address account) public virtual override {
-    require(
-      role == DEFAULT_ADMIN_ROLE || role == MINTER_ROLE || role == PAUSER_ROLE,
-      "ThriveCoinERC20Token: requested role is not supported"
-    );
-    super.grantRole(role, account);
-  }
-
-  /**
    * @dev See {Ownable-transferOwnership}
    */
   function transferOwnership(address newOwner) public virtual override onlyOwner {

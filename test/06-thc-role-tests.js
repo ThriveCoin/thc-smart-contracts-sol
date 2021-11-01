@@ -147,16 +147,14 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('granRole should be possible only on existing roles', async () => {
-      try {
-        await contract.grantRole(DUMMY_ROLE, accounts[3], { from: accounts[0] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: requested role is not supported'),
-          true
-        )
-      }
+    it('granRole could work for any role', async () => {
+      const res = await contract.grantRole(DUMMY_ROLE, accounts[3], { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'RoleGranted')
+      assert.strictEqual(txLog.args.role, DUMMY_ROLE)
+      assert.strictEqual(txLog.args.account, accounts[3])
+      assert.strictEqual(txLog.args.sender, accounts[0])
     })
 
     it('role members be enumerable', async () => {
