@@ -141,20 +141,4 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
     require(!paused(), "ThriveCoinERC20Token: update cap while paused");
     super._updateCap(cap_);
   }
-
-  /**
-   * @dev See {ERC20Pausalbe-_pause}
-   */
-  function _pause() internal virtual override whenNotPaused {
-    require(!isAccountBlocked(_msgSender()), "ThriveCoinERC20Token: caller account should be not be blocked");
-    super._pause();
-  }
-
-  /**
-   * @dev See {ERC20Pausalbe-_unpause}
-   */
-  function _unpause() internal virtual override whenPaused {
-    require(!isAccountBlocked(_msgSender()), "ThriveCoinERC20Token: caller account should be not be blocked");
-    super._unpause();
-  }
 }

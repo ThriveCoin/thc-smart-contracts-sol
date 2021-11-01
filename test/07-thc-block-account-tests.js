@@ -210,30 +210,12 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('pause should fail when caller is blocked', async () => {
-      try {
-        await contract.pause({ from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: caller account should be not be blocked'),
-          true
-        )
-      }
+    it('pause should not fail when caller is blocked', async () => {
+      await contract.pause({ from: accounts[1] })
     })
 
     it('unpause should fail when caller is blocked', async () => {
-      await contract.pause({ from: accounts[0] })
-
-      try {
-        await contract.unpause({ from: accounts[1] })
-        throw new Error('Should not reach here')
-      } catch (err) {
-        assert.strictEqual(
-          err.message.includes('ThriveCoinERC20Token: caller account should be not be blocked'),
-          true
-        )
-      }
+      await contract.unpause({ from: accounts[1] })
     })
   })
 })
