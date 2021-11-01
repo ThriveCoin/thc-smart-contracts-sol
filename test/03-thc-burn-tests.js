@@ -38,7 +38,7 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(txLog.args.value.toNumber(), 300)
     })
 
-    it('burn should fail when amount is zero', async () => {
+    it('burn should not fail when amount is zero', async () => {
       const res = await contract.burn(0, { from: accounts[0] })
       const txLog = res.logs[0]
 
@@ -120,7 +120,7 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('burnFrom should fail when amount is zero', async () => {
+    it('burnFrom should not fail when amount is zero', async () => {
       const res = await contract.burnFrom(accounts[0], 0, { from: accounts[1] })
       const txLogs = res.logs
 
