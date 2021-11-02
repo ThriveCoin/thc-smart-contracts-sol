@@ -4,16 +4,20 @@
 
 const assert = require('assert')
 const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+const { keccak256 } = require('@ethersproject/keccak256')
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 
-describe('ThriveCoinERC20Token', () => {
+describe.only('ThriveCoinERC20Token', () => {
   contract('locked funds tests', (accounts) => {
     let contract = null
+    const MINTER_ROLE = keccak256(Buffer.from('MINTER_ROLE', 'utf8'))
 
     before(async () => {
       contract = await ThriveCoinERC20Token.deployed()
+      await contract.grantRole(MINTER_ROLE, accounts[1], { from: accounts[0] })
       await contract.transfer(accounts[1], 1000, { from: accounts[0] })
       await contract.transfer(accounts[2], 1000, { from: accounts[0] })
+      await contract.burn(10000, { from: accounts[0] })
     })
 
     it('locked balance by default should be zero', async () => {
@@ -108,6 +112,18 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(totalLockedBalance.toNumber(), 85)
       assert.strictEqual(lockedBalancePerAccount2.toNumber(), 65)
       assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+    })
+
+    it('lockAmount should fail when new locked balance exceeds account balance', async () => {
+      try {
+        await contract.lockAmount(accounts[1], accounts[2], 916, { from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ERC20LockedFunds: amount greater than total lockable balance'),
+          true
+        )
+      }
     })
 
     it('unlockAmount is available to spender only', async () => {
@@ -211,7 +227,7 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(lockedBalancePerAccount3.toNumber(), 15)
     })
 
-    it('transfer should fail if it exceeds total locked balance', async () => {
+    it('transfer should fail if it includes total locked balance', async () => {
       try {
         await contract.transfer(accounts[0], 936, { from: accounts[1] })
         throw new Error('Should not reach here')
@@ -223,7 +239,7 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('transferFrom should fail if it exceeds total locked balance', async () => {
+    it('transferFrom should fail if it includes total locked balance', async () => {
       const totalBalance = await contract.balanceOf.call(accounts[1])
       const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
       const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
@@ -247,7 +263,7 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    it('burn should fail if it exceeds total locked balance', async () => {
+    it('burn should fail if it includes total locked balance', async () => {
       try {
         await contract.burn(936, { from: accounts[1] })
         throw new Error('Should not reach here')
@@ -259,6 +275,303 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
-    // TODO: mint tests and reduce lock balance on trasnfer tests
+    it('mint should work always', async () => {
+      await contract.mint(accounts[1], 100, { from: accounts[1] })
+
+      const balance = await contract.balanceOf.call(accounts[1])
+      const lockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      assert.strictEqual(balance.toNumber(), 1100)
+      assert.strictEqual(lockedBalance.toNumber(), 65)
+    })
+
+    it('transfer should work when it does not include locked balance', async () => {
+      await contract.transfer(accounts[4], 100, { from: accounts[1] })
+
+      const lockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc4 = await contract.balanceOf.call(accounts[4])
+
+      assert.strictEqual(lockedBalance.toNumber(), 65)
+      assert.strictEqual(balanceAcc1.toNumber(), 1000)
+      assert.strictEqual(balanceAcc4.toNumber(), 100)
+    })
+
+    it('transferFrom should work when it does not include locked balance', async () => {
+      await contract.approve(accounts[4], 100, { from: accounts[1] })
+      await contract.transferFrom(accounts[1], accounts[4], 100, { from: accounts[4] })
+
+      const lockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc4 = await contract.balanceOf.call(accounts[4])
+
+      assert.strictEqual(lockedBalance.toNumber(), 65)
+      assert.strictEqual(balanceAcc1.toNumber(), 900)
+      assert.strictEqual(balanceAcc4.toNumber(), 200)
+    })
+
+    it('burn should work when it does not include locked balance', async () => {
+      await contract.burn(100, { from: accounts[1] })
+
+      const lockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const balance = await contract.balanceOf.call(accounts[1])
+
+      assert.strictEqual(lockedBalance.toNumber(), 65)
+      assert.strictEqual(balance.toNumber(), 800)
+    })
+
+    it('burnFrom should work when it does not include locked balance', async () => {
+      await contract.approve(accounts[4], 100, { from: accounts[1] })
+      await contract.burnFrom(accounts[1], 100, { from: accounts[4] })
+
+      const lockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc4 = await contract.balanceOf.call(accounts[4])
+
+      assert.strictEqual(lockedBalance.toNumber(), 65)
+      assert.strictEqual(balanceAcc1.toNumber(), 700)
+      assert.strictEqual(balanceAcc4.toNumber(), 200)
+    })
+
+    it('transfer should reduce locked balance by reciever when sender has locked funds by receiver', async () => {
+      await contract.transfer(accounts[2], 10, { from: accounts[1] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 55)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 40)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 15)
+      assert.strictEqual(balanceAcc1.toNumber(), 690)
+      assert.strictEqual(balanceAcc2.toNumber(), 1010)
+      assert.strictEqual(balanceAcc3.toNumber(), 0)
+    })
+
+    it('transfer should clear locked balance by spender when amount exceeds locked balance by spender', async () => {
+      await contract.transfer(accounts[3], 30, { from: accounts[1] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 40)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 40)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 0)
+      assert.strictEqual(balanceAcc1.toNumber(), 660)
+      assert.strictEqual(balanceAcc2.toNumber(), 1010)
+      assert.strictEqual(balanceAcc3.toNumber(), 30)
+    })
+
+    it('transferFrom should reduce locked balance by caller and not spender', async () => {
+      await contract.lockAmount(accounts[1], accounts[3], 20, { from: accounts[1] })
+      await contract.transferFrom(accounts[1], accounts[3], 10, { from: accounts[2] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 30)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 650)
+      assert.strictEqual(balanceAcc2.toNumber(), 1010)
+      assert.strictEqual(balanceAcc3.toNumber(), 40)
+    })
+
+    it('transferFrom should clear locked balance by caller when amount exceeds locked balance by caller', async () => {
+      await contract.transferFrom(accounts[1], accounts[3], 40, { from: accounts[2] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 20)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 610)
+      assert.strictEqual(balanceAcc2.toNumber(), 1010)
+      assert.strictEqual(balanceAcc3.toNumber(), 80)
+    })
+
+    it('transfer should clear total locked balance when amount exceeds the total locked balance', async () => {
+      await contract.transfer(accounts[3], 30, { from: accounts[1] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 0)
+      assert.strictEqual(balanceAcc1.toNumber(), 580)
+      assert.strictEqual(balanceAcc2.toNumber(), 1010)
+      assert.strictEqual(balanceAcc3.toNumber(), 110)
+    })
+
+    it('transferFrom should clear total locked balance when amount exceeds the total locked balance', async () => {
+      await contract.lockAmount(accounts[1], accounts[2], 5, { from: accounts[1] })
+
+      let totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      let lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      let lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 5)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 5)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 0)
+
+      await contract.transferFrom(accounts[1], accounts[2], 10, { from: accounts[2] })
+
+      totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      const balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 0)
+      assert.strictEqual(balanceAcc1.toNumber(), 570)
+      assert.strictEqual(balanceAcc2.toNumber(), 1020)
+      assert.strictEqual(balanceAcc3.toNumber(), 110)
+    })
+
+    it('transfer should work with amount equal to balance + locked by spender - total locked', async () => {
+      await contract.lockAmount(accounts[1], accounts[2], 50, { from: accounts[1] })
+      await contract.lockAmount(accounts[1], accounts[3], 20, { from: accounts[1] })
+
+      let balanceAcc1 = await contract.balanceOf(accounts[1])
+      let totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      let lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      let lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(balanceAcc1.toNumber(), 570)
+      assert.strictEqual(totalLockedBalance.toNumber(), 70)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+
+      await contract.transfer(accounts[2], 550, { from: accounts[1] })
+
+      totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 20)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 20)
+      assert.strictEqual(balanceAcc2.toNumber(), 1570)
+      assert.strictEqual(balanceAcc3.toNumber(), 110)
+    })
+
+    it('transferFrom should work with amount equal to balance + locked by spender - total locked', async () => {
+      await contract.transfer(accounts[1], 300, { from: accounts[0] })
+      await contract.lockAmount(accounts[1], accounts[2], 50, { from: accounts[1] })
+
+      let balanceAcc1 = await contract.balanceOf(accounts[1])
+      let totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      let lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      let lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(balanceAcc1.toNumber(), 320)
+      assert.strictEqual(totalLockedBalance.toNumber(), 70)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+
+      await contract.transferFrom(accounts[1], accounts[3], 300, { from: accounts[2] })
+
+      totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 20)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 20)
+      assert.strictEqual(balanceAcc2.toNumber(), 1570)
+      assert.strictEqual(balanceAcc3.toNumber(), 410)
+    })
+
+    it('burn should work with amount equal to balance - total locked', async () => {
+      await contract.transfer(accounts[1], 80, { from: accounts[0] })
+      await contract.lockAmount(accounts[1], accounts[2], 50, { from: accounts[1] })
+
+      let balanceAcc1 = await contract.balanceOf(accounts[1])
+      let totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      let lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      let lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(balanceAcc1.toNumber(), 100)
+      assert.strictEqual(totalLockedBalance.toNumber(), 70)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+
+      await contract.burn(30, { from: accounts[1] })
+
+      totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 70)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 70)
+      assert.strictEqual(balanceAcc2.toNumber(), 1570)
+      assert.strictEqual(balanceAcc3.toNumber(), 410)
+    })
+
+    it('burnFrom should work with amount equal to balance + locked by spender - total locked', async () => {
+      await contract.transfer(accounts[1], 30, { from: accounts[0] })
+
+      let balanceAcc1 = await contract.balanceOf(accounts[1])
+      let totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      let lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      let lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(balanceAcc1.toNumber(), 100)
+      assert.strictEqual(totalLockedBalance.toNumber(), 70)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 50)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+
+      await contract.burnFrom(accounts[1], 80, { from: accounts[2] })
+
+      totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+      balanceAcc1 = await contract.balanceOf.call(accounts[1])
+      const balanceAcc2 = await contract.balanceOf.call(accounts[2])
+      const balanceAcc3 = await contract.balanceOf.call(accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 20)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 0)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 20)
+      assert.strictEqual(balanceAcc1.toNumber(), 20)
+      assert.strictEqual(balanceAcc2.toNumber(), 1570)
+      assert.strictEqual(balanceAcc3.toNumber(), 410)
+    })
   })
 })
