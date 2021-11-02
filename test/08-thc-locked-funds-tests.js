@@ -7,7 +7,7 @@ const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
 const { keccak256 } = require('@ethersproject/keccak256')
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 
-describe.only('ThriveCoinERC20Token', () => {
+describe('ThriveCoinERC20Token', () => {
   contract('locked funds tests', (accounts) => {
     let contract = null
     const MINTER_ROLE = keccak256(Buffer.from('MINTER_ROLE', 'utf8'))
@@ -572,6 +572,21 @@ describe.only('ThriveCoinERC20Token', () => {
       assert.strictEqual(balanceAcc1.toNumber(), 20)
       assert.strictEqual(balanceAcc2.toNumber(), 1570)
       assert.strictEqual(balanceAcc3.toNumber(), 410)
+    })
+
+    it('when locked funds are spent ClaimedLockedFunds event is emitted', async () => {
+      const res = await contract.transfer(accounts[3], 20, { from: accounts[1] })
+      const txLogs = res.logs
+
+      assert.strictEqual(txLogs[0].event, 'ClaimedLockedFunds')
+      assert.strictEqual(txLogs[0].args.owner, accounts[1])
+      assert.strictEqual(txLogs[0].args.spender, accounts[3])
+      assert.strictEqual(txLogs[0].args.amount.toNumber(), 20)
+
+      assert.strictEqual(txLogs[1].event, 'Transfer')
+      assert.strictEqual(txLogs[1].args.from, accounts[1])
+      assert.strictEqual(txLogs[1].args.to, accounts[3])
+      assert.strictEqual(txLogs[1].args.value.toNumber(), 20)
     })
   })
 })
