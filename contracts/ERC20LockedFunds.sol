@@ -148,13 +148,9 @@ abstract contract ERC20LockedFunds is ERC20 {
     );
 
     if (spendableLockedAmount > 0) {
-      if (from == caller) {
-        _lockedAccountBalanceMap[from][to] -= spendableLockedAmount >= amount ? amount : spendableLockedAmount;
-      } else {
-        _lockedAccountBalanceMap[from][caller] -= spendableLockedAmount >= amount ? amount : spendableLockedAmount;
-      }
-
-      _lockedBalances[from] -= totalLockedBalance >= amount ? amount : totalLockedBalance;
+      uint256 reducedAmount = spendableLockedAmount >= amount ? amount : spendableLockedAmount;
+      _lockedAccountBalanceMap[from][from == caller ? to : caller] -= reducedAmount;
+      _lockedBalances[from] -= reducedAmount;
     }
   }
 }
