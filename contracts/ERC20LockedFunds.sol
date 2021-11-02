@@ -21,6 +21,12 @@ abstract contract ERC20LockedFunds is ERC20 {
    */
   event UnlockedFunds(address indexed owner, address indexed spender, uint256 amount);
 
+  /**
+   * @dev Emitted when `spender` spends locked funds of `owner`.
+   * `amount` is spent amount.
+   */
+  event ClaimedLockedFunds(address indexed owner, address indexed spender, uint256 amount);
+
   mapping(address => uint256) private _lockedBalances;
 
   mapping(address => mapping(address => uint256)) private _lockedAccountBalanceMap;
@@ -134,23 +140,22 @@ abstract contract ERC20LockedFunds is ERC20 {
     }
 
     address caller = _msgSender();
+    address spender = from == caller ? to : caller; // from == caller -> transfer, otherwise transferFrom
     uint256 fromBalance = balanceOf(from);
     uint256 totalLockedBalance = _lockedBalances[from];
-    uint256 lockedByReceiver = _lockedAccountBalanceMap[from][to];
-    uint256 lockedByCaller = _lockedAccountBalanceMap[from][caller];
-
-    // from == caller -> transfer, otherwise transferFrom
-    uint256 spendableLockedAmount = from == caller ? lockedByReceiver : lockedByCaller;
+    uint256 lockedBySpender = _lockedAccountBalanceMap[from][spender];
 
     require(
-      fromBalance - totalLockedBalance + spendableLockedAmount >= amount,
+      fromBalance - totalLockedBalance + lockedBySpender >= amount,
       "ERC20LockedFunds: amount exceeds balance allowed to be spent"
     );
 
-    if (spendableLockedAmount > 0) {
-      uint256 reducedAmount = spendableLockedAmount >= amount ? amount : spendableLockedAmount;
+    if (lockedBySpender > 0) {
+      uint256 reducedAmount = lockedBySpender >= amount ? amount : lockedBySpender;
       _lockedAccountBalanceMap[from][from == caller ? to : caller] -= reducedAmount;
       _lockedBalances[from] -= reducedAmount;
+
+      emit ClaimedLockedFunds(from, spender, reducedAmount);
     }
   }
 }
