@@ -118,6 +118,14 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('lockAmount should work when paused', async () => {
+      await contract.lockAmount(accounts[0], accounts[1], 50, { from: accounts[0] })
+    })
+
+    it('unlockAmount should work when paused', async () => {
+      await contract.unlockAmount(accounts[0], accounts[1], 50, { from: accounts[1] })
+    })
+
     it('grantRole should work when paused', async () => {
       await contract.grantRole(MINTER_ROLE, accounts[1], { from: accounts[0] })
       await contract.grantRole(MINTER_ROLE, accounts[2], { from: accounts[0] })

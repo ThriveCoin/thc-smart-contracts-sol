@@ -226,6 +226,14 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('lockAmount is available to all accounts', async () => {
+      await contract.lockAmount(accounts[1], accounts[2], 1, { from: accounts[1] })
+    })
+
+    it('unlockAmount is available to all accounts', async () => {
+      await contract.unlockAmount(accounts[1], accounts[2], 1, { from: accounts[2] })
+    })
+
     it('pause can be done only by PAUSER_ROLE', async () => {
       await contract.pause({ from: accounts[0] })
       await contract.unpause({ from: accounts[0] })

@@ -210,6 +210,22 @@ describe('ThriveCoinERC20Token', () => {
       }
     })
 
+    it('lockAmount should not fail when owner is blocked', async () => {
+      await contract.lockAmount(accounts[1], accounts[2], 1, { from: accounts[1] })
+    })
+
+    it('lockAmount should not fail when spender is blocked', async () => {
+      await contract.lockAmount(accounts[2], accounts[1], 1, { from: accounts[2] })
+    })
+
+    it('unlockAmount not fail when owner is blocked', async () => {
+      await contract.unlockAmount(accounts[1], accounts[2], 1, { from: accounts[2] })
+    })
+
+    it('unlockAmount not fail when spender is blocked', async () => {
+      await contract.unlockAmount(accounts[2], accounts[1], 1, { from: accounts[1] })
+    })
+
     it('pause should not fail when caller is blocked', async () => {
       await contract.pause({ from: accounts[1] })
     })
