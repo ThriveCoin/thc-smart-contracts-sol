@@ -33,6 +33,14 @@ abstract contract ERC20LockedFunds is ERC20 {
   }
 
   /**
+   * @dev Returns the remaining number of locked tokens that `spender` will be
+   * allowed to spend on behalf of `owner`.
+   */
+  function lockedBalancePerAccount(address owner, address spender) public view virtual returns (uint256) {
+    return _lockedAccountBalanceMap[owner][spender];
+  }
+
+  /**
    * @dev Locks the `amount` to be spent by `spender` over the caller's tokens.
    * This `amount` does not override previous amount, it adds on top of it.
    *
@@ -125,13 +133,28 @@ abstract contract ERC20LockedFunds is ERC20 {
       return;
     }
 
+    address caller = _msgSender();
     uint256 fromBalance = balanceOf(from);
     uint256 totalLockedBalance = _lockedBalances[from];
-    uint256 lockedBySpender = _lockedAccountBalanceMap[from][to];
+    uint256 lockedByReceiver = _lockedAccountBalanceMap[from][to];
+    uint256 lockedByCaller = _lockedAccountBalanceMap[from][caller];
+
+    // from == caller -> transfer, otherwise transferFrom
+    uint256 spendableLockedAmount = from == caller ? lockedByReceiver : lockedByCaller;
 
     require(
-      fromBalance - totalLockedBalance + lockedBySpender >= amount,
+      fromBalance - totalLockedBalance + spendableLockedAmount >= amount,
       "ERC20LockedFunds: amount exceeds balance allowed to be spent"
     );
+
+    if (spendableLockedAmount > 0) {
+      if (from == caller) {
+        _lockedAccountBalanceMap[from][to] -= spendableLockedAmount >= amount ? amount : spendableLockedAmount;
+      } else {
+        _lockedAccountBalanceMap[from][caller] -= spendableLockedAmount >= amount ? amount : spendableLockedAmount;
+      }
+
+      _lockedBalances[from] -= totalLockedBalance >= amount ? amount : totalLockedBalance;
+    }
   }
 }
