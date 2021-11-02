@@ -90,6 +90,10 @@ abstract contract ERC20LockedFunds is ERC20 {
     require(owner != address(0), "ERC20LockedFunds: lock from the zero address");
     require(spender != address(0), "ERC20LockedFunds: lock to the zero address");
     require(amount > 0, "ERC20LockedFunds: amount to be locked should be greater than zero");
+    require(
+      balanceOf(owner) >= amount + _lockedBalances[owner],
+      "ERC20LockedFunds: amount greater than total lockable balance"
+    );
 
     _lockedBalances[owner] += amount;
     _lockedAccountBalanceMap[owner][spender] += amount;
