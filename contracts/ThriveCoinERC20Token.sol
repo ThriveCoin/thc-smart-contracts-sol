@@ -10,7 +10,7 @@ import "./ERC20LockedFunds.sol";
 /**
  * @dev Implementation of the THC ERC20 Token.
  *
- * THC is a dynamic supply cross chain ERC20 token that supports burning and
+ * THRIVE is a dynamic supply cross chain ERC20 token that supports burning and
  * minting. The token is capped where `cap` is dynamic, but can only be
  * decreased after the initial value. The decrease of `cap` happens when
  * additional blockchains are added. The idea is to divide every blockchain
@@ -27,12 +27,18 @@ import "./ERC20LockedFunds.sol";
  * the funds will be lost forever and are not recoverable, this will cause to
  * decrease total supply additionally!
  *
+ * Another key feature of THRIVE is ability to lock funds to be spend only by
+ * specific accounts. This is achieved through `lockAmount` and `unlockAmount`
+ * actions, where the first one is called by balance owner and second by spender.
+ *
  * Key features:
  * - burn
  * - mint
  * - capped, dynamic decreasing only
  * - pausable
  * - blocking/unblocking accounts
+ * - role management
+ * - locking/unlocking funds
  */
 contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, ERC20LockedFunds, Ownable {
   uint8 private _decimals;

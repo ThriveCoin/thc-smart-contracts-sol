@@ -21,7 +21,7 @@ describe('ThriveCoinERC20Token', () => {
       const totalSupply = await contract.totalSupply.call()
 
       assert.strictEqual(name, 'ThriveCoin')
-      assert.strictEqual(symbol, 'THC')
+      assert.strictEqual(symbol, 'THRIVE')
       assert.strictEqual(decimals.toNumber(), 8)
       assert.strictEqual(totalSupply.toNumber(), 1000000000)
     })

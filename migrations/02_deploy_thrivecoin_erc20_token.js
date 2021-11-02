@@ -7,7 +7,7 @@ module.exports = function (deployer, network, accounts) {
     const owner = accounts[0]
     const config = {
       name_: 'ThriveCoin',
-      symbol_: 'THC',
+      symbol_: 'THRIVE',
       decimals_: 8,
       totalSupply_: '1000000000',
       cap_: '1000000000'

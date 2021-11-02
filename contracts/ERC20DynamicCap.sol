@@ -12,8 +12,7 @@ abstract contract ERC20DynamicCap is ERC20 {
   uint256 private _cap = 2**256 - 1; // MAX_INT
 
   /**
-   * @dev Sets the value of the `cap`. This value is immutable, it can only be
-   * set once during construction.
+   * @dev Sets the value of the `cap`. This value later can only be decreased.
    */
   constructor(uint256 cap_) {
     _updateCap(cap_);

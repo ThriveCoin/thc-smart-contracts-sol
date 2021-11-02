@@ -27,8 +27,8 @@ abstract contract ERC20Blockable is ERC20 {
   }
 
   /**
-   * @dev Blocks the account, if account is already blocked returns `false`
-   * otherwise returns `true`
+   * @dev Blocks the account, if account is already blocked action call
+   * is reverted
    */
   function _blockAccount(address account) internal virtual {
     require(!isAccountBlocked(account), "ERC20Blockable: account is already blocked");
@@ -38,8 +38,8 @@ abstract contract ERC20Blockable is ERC20 {
   }
 
   /**
-   * @dev Unblocks the account, if account is not blocked returns `false`
-   * otherwise returns `true`
+   * @dev Unblocks the account, if account is not blocked action call
+   * is reverted
    */
   function _unblockAccount(address account) internal virtual {
     require(isAccountBlocked(account), "ERC20Blockable: account is not blocked");

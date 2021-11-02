@@ -62,10 +62,10 @@ abstract contract ERC20LockedFunds is ERC20 {
   }
 
   /**
-   * @dev Locks the `amount` to be spent by `spender` over the caller's tokens.
-   * This `amount` does not override previous amount, it adds on top of it.
+   * @dev Unlocks the `amount` from being spent by `caller` over the `owner` balance.
+   * This `amount` does not override previous locked balance, it reduces it.
    *
-   * Emits a {LockedFunds} event.
+   * Emits a {UnlockedFunds} event.
    */
   function unlockAmount(
     address owner,
