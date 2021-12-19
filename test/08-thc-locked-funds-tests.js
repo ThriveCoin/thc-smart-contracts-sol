@@ -588,5 +588,53 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(txLogs[1].args.to, accounts[3])
       assert.strictEqual(txLogs[1].args.value.toNumber(), 20)
     })
+
+    it('lockAmountFrom should fail caller is not spender', async () => {
+      try {
+        await contract.approve(accounts[2], 0, { from: accounts[1] })
+        await contract.lockAmountFrom(accounts[1], accounts[2], 916, { from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ERC20LockedFunds: only spender can request lock'),
+          true
+        )
+      }
+    })
+
+    it('lockAmountFrom should fail when amount exceeds allowance', async () => {
+      try {
+        await contract.approve(accounts[2], 0, { from: accounts[1] })
+        await contract.lockAmountFrom(accounts[1], accounts[2], 916, { from: accounts[2] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ERC20LockedFunds: lock amount exceeds allowance'),
+          true
+        )
+      }
+    })
+
+    it('lockAmountFrom should lock funds if amount does not exceeds allowance', async () => {
+      await contract.transfer(accounts[1], 50, { from: accounts[0] })
+      await contract.lockAmount(accounts[1], accounts[3], 15, { from: accounts[1] })
+      await contract.approve(accounts[2], 5, { from: accounts[1] })
+
+      const res = await contract.lockAmountFrom(accounts[1], accounts[2], 5, { from: accounts[2] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'LockedFunds')
+      assert.strictEqual(txLog.args.owner, accounts[1])
+      assert.strictEqual(txLog.args.spender, accounts[2])
+      assert.strictEqual(txLog.args.amount.toNumber(), 5)
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 20)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 5)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 15)
+    })
   })
 })

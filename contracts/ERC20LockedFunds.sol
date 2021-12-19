@@ -62,6 +62,22 @@ abstract contract ERC20LockedFunds is ERC20 {
   }
 
   /**
+   * @dev Locks the `amount` to be spent by `spender`.
+   * This `amount` does not override previous amount, it adds on top of it.
+   *
+   * Emits a {LockedFunds} event.
+   */
+  function lockAmountFrom(
+    address owner,
+    address spender,
+    uint256 amount
+  ) public virtual {
+    require(spender == _msgSender(), "ERC20LockedFunds: only spender can request lock");
+    require(allowance(owner, spender) >= amount, "ERC20LockedFunds: lock amount exceeds allowance");
+    _lockAmount(owner, spender, amount);
+  }
+
+  /**
    * @dev Unlocks the `amount` from being spent by `caller` over the `owner` balance.
    * This `amount` does not override previous locked balance, it reduces it.
    *
