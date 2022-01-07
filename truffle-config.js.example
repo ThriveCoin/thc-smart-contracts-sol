@@ -3,6 +3,8 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider')
 const infuraPID = ''
 const privkey = ''
+const etherscanApiKey = ''
+const polygonscanApiKey = ''
 
 module.exports = {
   networks: {
@@ -26,6 +28,22 @@ module.exports = {
       confirmations: 2,    // # of confs to wait between deployments. (default: 0)
       timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
+    },
+    goerli: {
+      provider: () => new HDWalletProvider({
+        privateKeys: [privkey],
+        providerOrUrl: `https://rpc.goerli.mudit.blog`
+      }),
+      network_id: 5,
+      timeoutBlocks: 200
+    },
+    mumbai: {
+      provider: () => new HDWalletProvider({
+        privateKeys: [privkey],
+        providerOrUrl: 'https://matic-mainnet.chainstacklabs.com'
+      }),
+      network_id: 80001,
+      timeoutBlocks: 200
     }
   },
   mocha: {
@@ -35,5 +53,12 @@ module.exports = {
     solc: {
       version: '0.8.0'
     }
+  },
+  plugins: [
+    'truffle-plugin-verify'
+  ],
+  api_keys: {
+    etherscan: etherscanApiKey,
+    polygonscan: polygonscanApiKey
   }
 }

@@ -29,4 +29,18 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(ThriveCoinERC20Token, ...Object.values(config), { from: owner })
   }
+
+  if (network === 'goerli') {
+    const owner = accounts[0]
+
+    const config = {
+      name_: 'ThriveCoinTEST1',
+      symbol_: 'THRIVETEST1',
+      decimals_: 8,
+      totalSupply_: '100000000000000000',
+      cap_: '100000000000000000'
+    }
+
+    await deployer.deploy(ThriveCoinERC20Token, ...Object.values(config), { from: owner })
+  }
 }
