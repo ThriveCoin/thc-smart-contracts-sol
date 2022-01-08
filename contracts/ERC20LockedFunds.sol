@@ -73,7 +73,10 @@ abstract contract ERC20LockedFunds is ERC20 {
     uint256 amount
   ) public virtual {
     require(spender == _msgSender(), "ERC20LockedFunds: only spender can request lock");
-    require(allowance(owner, spender) >= amount, "ERC20LockedFunds: lock amount exceeds allowance");
+    require(
+      allowance(owner, spender) >= amount + _lockedAccountBalanceMap[owner][spender],
+      "ERC20LockedFunds: lock amount exceeds allowance"
+    );
     _lockAmount(owner, spender, amount);
   }
 
@@ -166,7 +169,7 @@ abstract contract ERC20LockedFunds is ERC20 {
     uint256 lockedBySpender = _lockedAccountBalanceMap[from][spender];
 
     require(
-      fromBalance - totalLockedBalance + lockedBySpender >= amount,
+      fromBalance + lockedBySpender - totalLockedBalance >= amount,
       "ERC20LockedFunds: amount exceeds balance allowed to be spent"
     );
 

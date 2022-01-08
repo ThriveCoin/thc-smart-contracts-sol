@@ -636,5 +636,28 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(lockedBalancePerAccount2.toNumber(), 5)
       assert.strictEqual(lockedBalancePerAccount3.toNumber(), 15)
     })
+
+    it('lockAmountFrom should calculate already locked funds + allowance', async () => {
+      await contract.approve(accounts[2], 7, { from: accounts[1] })
+
+      try {
+        await contract.lockAmountFrom(accounts[1], accounts[2], 3, { from: accounts[2] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ERC20LockedFunds: lock amount exceeds allowance'),
+          true
+        )
+      }
+      await contract.lockAmountFrom(accounts[1], accounts[2], 2, { from: accounts[2] })
+
+      const totalLockedBalance = await contract.lockedBalanceOf.call(accounts[1])
+      const lockedBalancePerAccount2 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[2])
+      const lockedBalancePerAccount3 = await contract.lockedBalancePerAccount.call(accounts[1], accounts[3])
+
+      assert.strictEqual(totalLockedBalance.toNumber(), 22)
+      assert.strictEqual(lockedBalancePerAccount2.toNumber(), 7)
+      assert.strictEqual(lockedBalancePerAccount3.toNumber(), 15)
+    })
   })
 })
