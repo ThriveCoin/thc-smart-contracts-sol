@@ -33,6 +33,11 @@ describe('ThriveCoinERC20Token', () => {
       assert.strictEqual(res, false)
     })
 
+    it('owner should be deployer address', async () => {
+      const owner = await contract.owner.call()
+      assert.strictEqual(owner, accounts[0])
+    })
+
     it('owner should have all three roles by default', async () => {
       const owner = await contract.owner.call()
       const res = await Promise.all([
