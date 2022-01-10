@@ -34,8 +34,8 @@ module.exports = async function (deployer, network, accounts) {
     const owner = accounts[0]
 
     const config = {
-      name_: 'ThriveCoinTEST1',
-      symbol_: 'THRIVETEST1',
+      name_: 'ThriveCoinTEST2',
+      symbol_: 'THRIVETEST2',
       decimals_: 8,
       totalSupply_: '100000000000000000',
       cap_: '100000000000000000'
