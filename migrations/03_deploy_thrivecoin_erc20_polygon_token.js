@@ -10,7 +10,7 @@ module.exports = async function (deployer, network, accounts) {
       symbol_: 'THRIVE',
       decimals_: 8,
       cap_: '1000000000',
-      childChainManagerProxy_: '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa'
+      childChainManagerProxy_: owner
     }
 
     await deployer.deploy(ThriveCoinERC20TokenPolygon, ...Object.values(config), { from: owner })
@@ -24,7 +24,7 @@ module.exports = async function (deployer, network, accounts) {
       symbol_: 'THRIVE',
       decimals_: 8,
       cap_: '100000000000000000',
-      childChainManagerProxy_: '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa'
+      childChainManagerProxy_: owner
     }
 
     await deployer.deploy(ThriveCoinERC20TokenPolygon, ...Object.values(config), { from: owner })
