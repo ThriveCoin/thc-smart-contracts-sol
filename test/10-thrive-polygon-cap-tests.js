@@ -69,10 +69,16 @@ describe('ThriveCoinERC20TokenPolygon', () => {
 
     it('cap decrease should override value, not substract it', async () => {
       await contract.withdraw(70000, { from: accounts[0] })
-      await contract.updateCap(999997000, { from: accounts[0] })
-
+      const res = await contract.updateCap(999997000, { from: accounts[0] })
+      const txLog = res.logs[0]
       const cap = await contract.cap.call()
+
       assert.strictEqual(cap.toNumber(), 999997000)
+
+      assert.strictEqual(txLog.event, 'CapUpdated')
+      assert.strictEqual(txLog.args.from, accounts[0])
+      assert.strictEqual(txLog.args.prevCap.toNumber(), 1000000000)
+      assert.strictEqual(txLog.args.newCap.toNumber(), 999997000)
     })
 
     it('deposit cannot exceed total cap', async () => {

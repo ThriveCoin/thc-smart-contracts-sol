@@ -9,6 +9,11 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
  * The cap is dynamic still but can only be decreased further
  */
 abstract contract ERC20DynamicCap is ERC20 {
+  /**
+   * @dev Emitted when cap is updated/decreased
+   */
+  event CapUpdated(address indexed from, uint256 prevCap, uint256 newCap);
+
   uint256 private _cap = 2**256 - 1; // MAX_INT
 
   /**
@@ -38,9 +43,11 @@ abstract contract ERC20DynamicCap is ERC20 {
    */
   function _updateCap(uint256 cap_) internal virtual {
     require(cap_ > 0, "ERC20DynamicCap: cap cannot be 0");
-    require(cap_ < cap(), "ERC20DynamicCap: cap can only be decreased");
+    require(cap_ < _cap, "ERC20DynamicCap: cap can only be decreased");
     require(cap_ >= totalSupply(), "ERC20DynamicCap: cap cannot be less than total supply");
+    uint256 prevCap = _cap;
     _cap = cap_;
+    emit CapUpdated(_msgSender(), prevCap, cap_);
   }
 
   /**
