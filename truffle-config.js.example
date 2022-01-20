@@ -35,8 +35,8 @@ module.exports = {
         providerOrUrl: `https://rpc.goerli.mudit.blog`
       }),
       network_id: 5,
-      timeoutBlocks: 200,
-      networkCheckTimeout: 60000
+      networkCheckTimeout: 1000000,
+      timeoutBlocks: 200
     },
     mumbai: {
       provider: () => new HDWalletProvider({
@@ -44,8 +44,8 @@ module.exports = {
         providerOrUrl: 'https://matic-mainnet.chainstacklabs.com'
       }),
       network_id: 80001,
-      timeoutBlocks: 200,
-      networkCheckTimeout: 60000
+      networkCheckTimeout: 1000000,
+      timeoutBlocks: 200
     }
   },
   mocha: {
