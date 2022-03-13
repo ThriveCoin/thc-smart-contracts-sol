@@ -21,6 +21,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -110,6 +111,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -184,6 +186,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -272,6 +275,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -408,6 +412,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -417,7 +422,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       contractArgs.token_ = erc20.address
     })
 
-    it('initial value should be zero', async () => {
+    it('initial value could be zero', async () => {
       const contract = await ThriveCoinVestingSchedule.new(
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
@@ -425,6 +430,16 @@ describe.only('ThriveCoinVestingSchedule', () => {
 
       const claimed = await contract.claimed.call()
       assert.strictEqual(claimed.toNumber(), 0)
+    })
+
+    it('initial value could be different from zero', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimed_: 10 }),
+        { from: accounts[0] }
+      )
+
+      const claimed = await contract.claimed.call()
+      assert.strictEqual(claimed.toNumber(), 10)
     })
 
     it('should return claimed so far after multiple claims', async () => {
@@ -459,6 +474,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -493,6 +509,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -534,6 +551,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
       duration_: 30,
       cliffDuration_: 5,
       interval_: 4,
+      claimed_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }

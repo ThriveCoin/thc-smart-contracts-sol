@@ -35,7 +35,8 @@ contract ThriveCoinVestingSchedule is Context {
     uint256 startTime, // unix epoch ms
     uint256 duration_, // in days
     uint256 cliffDuration_, // in days
-    uint256 interval_, //in days
+    uint256 interval_, // in days
+    uint256 claimed_, // already claimed, helpful for chain migrations
     bool revokable_,
     bool immutableBeneficiary_
   ) {
@@ -51,6 +52,7 @@ contract ThriveCoinVestingSchedule is Context {
     _duration = duration_;
     _cliffDuration = cliffDuration_;
     _interval = interval_;
+    _claimed = claimed_;
     _revokable = revokable_;
     _immutableBeneficiary = immutableBeneficiary_;
   }
