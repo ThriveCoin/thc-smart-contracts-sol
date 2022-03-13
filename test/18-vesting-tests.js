@@ -345,11 +345,11 @@ describe.only('ThriveCoinVestingSchedule', () => {
 
       assert.strictEqual(availableBefore.toNumber(), 26)
       assert.strictEqual(claimedBefore.toNumber(), 0)
-      assert.strictEqual(contractBalBefore.toNumber(), 26)
+      assert.strictEqual(contractBalBefore.toNumber(), 100)
       assert.strictEqual(beneficiaryBalBefore.toNumber(), 0)
       assert.strictEqual(availableAfter.toNumber(), 6)
       assert.strictEqual(claimedAfter.toNumber(), 20)
-      assert.strictEqual(contractBalAfter.toNumber(), 6)
+      assert.strictEqual(contractBalAfter.toNumber(), 80)
       assert.strictEqual(beneficiaryBalAfter.toNumber(), 20)
     })
 
@@ -389,11 +389,11 @@ describe.only('ThriveCoinVestingSchedule', () => {
 
       assert.strictEqual(availableBefore.toNumber(), 26)
       assert.strictEqual(claimedBefore.toNumber(), 0)
-      assert.strictEqual(contractBalBefore.toNumber(), 26)
+      assert.strictEqual(contractBalBefore.toNumber(), 100)
       assert.strictEqual(beneficiaryBalBefore.toNumber(), 40)
       assert.strictEqual(availableAfter.toNumber(), 0)
       assert.strictEqual(claimedAfter.toNumber(), 26)
-      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(contractBalAfter.toNumber(), 74)
       assert.strictEqual(beneficiaryBalAfter.toNumber(), 66)
     })
   })
@@ -577,7 +577,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
     })
   })
 
-  contract.only('revoke tests', (accounts) => {
+  contract('revoke tests', (accounts) => {
     const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
     const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
 
@@ -756,6 +756,135 @@ describe.only('ThriveCoinVestingSchedule', () => {
           err.message.includes('ThriveCoinVestingSchedule: contract is revoked'), true
         )
       }
+    })
+  })
+
+  contract('change beneficiary tests', (accounts) => {
+    const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+    const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
+
+    let erc20 = null
+    const startOfDay = Math.floor(Math.floor(Date.now() / 1000) / SECONDS_PER_DAY) * SECONDS_PER_DAY
+    const contractArgs = {
+      token_: '',
+      beneficiary_: accounts[1],
+      allocatedAmount_: 100,
+      startTime: startOfDay,
+      duration_: 30,
+      cliffDuration_: 5,
+      interval_: 4,
+      claimed_: 0,
+      revokable_: false,
+      immutableBeneficiary_: false
+    }
+
+    before(async () => {
+      erc20 = await ThriveCoinERC20Token.deployed()
+      contractArgs.token_ = erc20.address
+    })
+
+    it('cannot change beneficiary if it is immutable', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, immutableBeneficiary_: true }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: beneficiary is immutable'), true
+        )
+      }
+    })
+
+    it('can be called only by owner', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.changeBeneficiary(accounts[2], { from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('Ownable: caller is not the owner'), true
+        )
+      }
+    })
+
+    it('once changed funds will be moved to new beneficiary when claim is triggered', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      const res1 = await contract.claim(5, { from: contractArgs.beneficiary_ })
+      const txLog1 = res1.logs[0]
+
+      const oldBenefBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const newBenefBalBefore = await erc20.balanceOf(accounts[2])
+
+      await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
+      const res2 = await contract.claim(10, { from: accounts[2] })
+      const txLog2 = res2.logs[0]
+
+      const oldBenefBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const newBenefBalAfter = await erc20.balanceOf(accounts[2])
+
+      assert.strictEqual(txLog1.event, 'VestingFundsClaimed')
+      assert.strictEqual(txLog1.args.token, erc20.address)
+      assert.strictEqual(txLog1.args.beneficiary, contractArgs.beneficiary_)
+      assert.strictEqual(txLog1.args.amount.toNumber(), 5)
+
+      assert.strictEqual(txLog2.event, 'VestingFundsClaimed')
+      assert.strictEqual(txLog2.args.token, erc20.address)
+      assert.strictEqual(txLog2.args.beneficiary, accounts[2])
+      assert.strictEqual(txLog2.args.amount.toNumber(), 10)
+
+      assert.strictEqual(oldBenefBalBefore.toNumber(), 5)
+      assert.strictEqual(newBenefBalBefore.toNumber(), 0)
+      assert.strictEqual(oldBenefBalAfter.toNumber(), 5)
+      assert.strictEqual(newBenefBalAfter.toNumber(), 10)
+    })
+
+    it('once changed funds cannod be claimed by old beneficiary', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(5, { from: contractArgs.beneficiary_ })
+
+      await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
+
+      try {
+        await contract.claim(5, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: only beneficiary can perform the action'), true
+        )
+      }
+    })
+
+    it('should emit VestingBeneficiaryChanged event', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+
+      const res = await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'VestingBeneficiaryChanged')
+      assert.strictEqual(txLog.args.token, erc20.address)
+      assert.strictEqual(txLog.args.oldBeneficiary, contractArgs.beneficiary_)
+      assert.strictEqual(txLog.args.newBeneficiary, accounts[2])
     })
   })
 })

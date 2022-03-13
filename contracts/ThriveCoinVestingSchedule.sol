@@ -16,6 +16,11 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     address indexed refundDest,
     uint256 amount
   );
+  event VestingBeneficiaryChanged(
+    address indexed token,
+    address indexed oldBeneficiary,
+    address indexed newBeneficiary
+  );
 
   modifier onlyBeneficiary() {
     require(beneficiary() == _msgSender(), "ThriveCoinVestingSchedule: only beneficiary can perform the action");
@@ -163,5 +168,12 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     _revoked = true;
     emit VestingFundsRevoked(_token, _beneficiary, dest, amount);
     SafeERC20.safeTransfer(IERC20(_token), dest, amount);
+  }
+
+  function changeBeneficiary(address newBeneficiary) public virtual onlyOwner {
+    require(immutableBeneficiary() == false, "ThriveCoinVestingSchedule: beneficiary is immutable");
+
+    emit VestingBeneficiaryChanged(_token, _beneficiary, newBeneficiary);
+    _beneficiary = newBeneficiary;
   }
 }
