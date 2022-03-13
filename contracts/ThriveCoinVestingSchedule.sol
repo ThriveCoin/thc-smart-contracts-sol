@@ -5,13 +5,25 @@ pragma solidity ^0.8.0;
 // https://github.com/cpu-coin/CPUcoin/blob/master/contracts/IERC20Vestable.sol
 
 import "openzeppelin-solidity/contracts/utils/Context.sol";
+import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract ThriveCoinVestingSchedule is Context {
+contract ThriveCoinVestingSchedule is Context, Ownable {
   event VestingFundsClaimed(address indexed token, address indexed beneficiary, uint256 amount);
+  event VestingFundsRevoked(
+    address indexed token,
+    address indexed beneficiary,
+    address indexed refundDest,
+    uint256 amount
+  );
 
   modifier onlyBeneficiary() {
     require(beneficiary() == _msgSender(), "ThriveCoinVestingSchedule: only beneficiary can perform the action");
+    _;
+  }
+
+  modifier notRevoked() {
+    require(revoked() == false, "ThriveCoinVestingSchedule: contract is revoked");
     _;
   }
 
@@ -25,6 +37,7 @@ contract ThriveCoinVestingSchedule is Context {
   uint256 private _cliffDuration;
   uint256 private _interval;
   bool private immutable _revokable;
+  bool private _revoked;
   bool private immutable _immutableBeneficiary;
   uint256 private _claimed;
 
@@ -55,6 +68,7 @@ contract ThriveCoinVestingSchedule is Context {
     _claimed = claimed_;
     _revokable = revokable_;
     _immutableBeneficiary = immutableBeneficiary_;
+    _revoked = false;
   }
 
   function token() public view virtual returns (address) {
@@ -109,6 +123,10 @@ contract ThriveCoinVestingSchedule is Context {
     return allocatedAmount() - calcVestedAmount(block.timestamp);
   }
 
+  function revoked() public view virtual returns (bool) {
+    return _revoked;
+  }
+
   function calcVestedAmount(uint256 timestamp) public view virtual returns (uint256) {
     uint256 start = startDay();
     uint256 length = duration();
@@ -130,12 +148,20 @@ contract ThriveCoinVestingSchedule is Context {
     return (totalAmount * effectiveDaysVested) / length;
   }
 
-  function claim(uint256 amount) public virtual onlyBeneficiary {
+  function claim(uint256 amount) public virtual onlyBeneficiary notRevoked {
     uint256 availableBal = available();
     require(amount <= availableBal, "ThriveCoinVestingSchedule: amount exceeds available balance");
 
     _claimed += amount;
     emit VestingFundsClaimed(_token, _beneficiary, amount);
     SafeERC20.safeTransfer(IERC20(_token), _beneficiary, amount);
+  }
+
+  function revoke() public virtual onlyOwner notRevoked {
+    uint256 amount = allocatedAmount() - claimed();
+    address dest = owner();
+    _revoked = true;
+    emit VestingFundsRevoked(_token, _beneficiary, dest, amount);
+    SafeERC20.safeTransfer(IERC20(_token), dest, amount);
   }
 }

@@ -309,7 +309,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
 
       const available = await contract.available.call()
       assert.strictEqual(available.toNumber(), 26)
@@ -329,7 +329,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
 
       const availableBefore = await contract.available.call()
       const claimedBefore = await contract.claimed.call()
@@ -358,7 +358,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
       const res = await contract.claim(20, { from: contractArgs.beneficiary_ })
       const txLog = res.logs[0]
 
@@ -373,7 +373,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
 
       const availableBefore = await contract.available.call()
       const claimedBefore = await contract.claimed.call()
@@ -447,7 +447,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
 
       await contract.claim(13, { from: contractArgs.beneficiary_ })
       const claimed1 = await contract.claimed.call()
@@ -524,7 +524,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const vested = await contract.vested.call()
@@ -566,7 +566,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 26, { from: accounts[0] })
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const vested = await contract.vested.call()
@@ -574,6 +574,188 @@ describe.only('ThriveCoinVestingSchedule', () => {
 
       assert.strictEqual(vested.toNumber(), 26)
       assert.strictEqual(locked.toNumber(), 74)
+    })
+  })
+
+  contract.only('revoke tests', (accounts) => {
+    const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+    const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
+
+    let erc20 = null
+    const startOfDay = Math.floor(Math.floor(Date.now() / 1000) / SECONDS_PER_DAY) * SECONDS_PER_DAY
+    const contractArgs = {
+      token_: '',
+      beneficiary_: accounts[1],
+      allocatedAmount_: 100,
+      startTime: startOfDay,
+      duration_: 30,
+      cliffDuration_: 5,
+      interval_: 4,
+      claimed_: 0,
+      revokable_: false,
+      immutableBeneficiary_: true
+    }
+
+    before(async () => {
+      erc20 = await ThriveCoinERC20Token.deployed()
+      contractArgs.token_ = erc20.address
+    })
+
+    it('should return remaing amount to owner', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(20, { from: contractArgs.beneficiary_ })
+
+      const revokedBefore = await contract.revoked.call()
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const beneficiaryBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.revoke({ from: accounts[0] })
+
+      const revokedAfter = await contract.revoked.call()
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const beneficiaryBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(revokedBefore, false)
+      assert.strictEqual(contractBalBefore.toNumber(), 80)
+      assert.strictEqual(beneficiaryBalBefore.toNumber(), 20)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999900)
+      assert.strictEqual(revokedAfter, true)
+      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(beneficiaryBalAfter.toNumber(), 20)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999980)
+    })
+
+    it('can revoke the whole amount if not claimed', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      const revokedBefore = await contract.revoked.call()
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.revoke({ from: accounts[0] })
+
+      const revokedAfter = await contract.revoked.call()
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(revokedBefore, false)
+      assert.strictEqual(contractBalBefore.toNumber(), 100)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999880)
+      assert.strictEqual(revokedAfter, true)
+      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999980)
+    })
+
+    it('won\'t revoke any amount if all funds are already claimed', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 50 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(100, { from: contractArgs.beneficiary_ })
+
+      const revokedBefore = await contract.revoked.call()
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const beneficiaryBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.revoke({ from: accounts[0] })
+
+      const revokedAfter = await contract.revoked.call()
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const beneficiaryBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(revokedBefore, false)
+      assert.strictEqual(contractBalBefore.toNumber(), 0)
+      assert.strictEqual(beneficiaryBalBefore.toNumber(), 120)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999880)
+      assert.strictEqual(revokedAfter, true)
+      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(beneficiaryBalAfter.toNumber(), 120)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999880)
+    })
+
+    it('should emit VestingFundsRevoked event', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(20, { from: contractArgs.beneficiary_ })
+
+      const res = await contract.revoke({ from: accounts[0] })
+      const txLog = res.logs[0]
+
+      assert.strictEqual(txLog.event, 'VestingFundsRevoked')
+      assert.strictEqual(txLog.args.token, erc20.address)
+      assert.strictEqual(txLog.args.beneficiary, contractArgs.beneficiary_)
+      assert.strictEqual(txLog.args.refundDest, accounts[0])
+      assert.strictEqual(txLog.args.amount.toNumber(), 80)
+    })
+
+    it('can be triggered only by owner', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.revoke({ from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('Ownable: caller is not the owner'), true
+        )
+      }
+    })
+
+    it('cannot be called if contract is already revoked', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.revoke({ from: accounts[0] })
+
+      try {
+        await contract.revoke({ from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: contract is revoked'), true
+        )
+      }
+    })
+
+    it('funds cannot be claimed once revoked', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(5, { from: contractArgs.beneficiary_ })
+      await contract.revoke({ from: accounts[0] })
+
+      try {
+        await contract.claim(5, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: contract is revoked'), true
+        )
+      }
     })
   })
 })
