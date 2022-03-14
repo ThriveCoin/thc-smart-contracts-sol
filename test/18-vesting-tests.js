@@ -6,7 +6,7 @@ const assert = require('assert')
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 const SECONDS_PER_DAY = 86400
 
-describe.only('ThriveCoinVestingSchedule', () => {
+describe('ThriveCoinVestingSchedule', () => {
   contract('constructor tests', (accounts) => {
     const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
     const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
