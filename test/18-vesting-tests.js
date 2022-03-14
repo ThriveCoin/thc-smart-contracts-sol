@@ -887,4 +887,91 @@ describe.only('ThriveCoinVestingSchedule', () => {
       assert.strictEqual(txLog.args.newBeneficiary, accounts[2])
     })
   })
+
+  contract('ownership tests', (accounts) => {
+    const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+    const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
+
+    let contract = null
+    let erc20 = null
+    const startTime = Math.floor(Date.now() / 1000) + SECONDS_PER_DAY
+    const contractArgs = {
+      token_: '',
+      beneficiary_: accounts[1],
+      allocatedAmount_: 100,
+      startTime: startTime,
+      duration_: 30,
+      cliffDuration_: 5,
+      interval_: 4,
+      claimed_: 0,
+      revokable_: false,
+      immutableBeneficiary_: true
+    }
+
+    before(async () => {
+      erc20 = await ThriveCoinERC20Token.deployed()
+      contractArgs.token_ = erc20.address
+      contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values(contractArgs),
+        { from: accounts[0] }
+      )
+    })
+
+    it('transferOwnership can be done only by owner', async () => {
+      const oldOwner = await contract.owner.call()
+      await contract.transferOwnership(accounts[5], { from: oldOwner })
+      const newOwner = await contract.owner.call()
+
+      assert.strictEqual(oldOwner === accounts[0], true)
+      assert.strictEqual(newOwner === accounts[5], true)
+
+      try {
+        await contract.transferOwnership(accounts[5], { from: oldOwner })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('Ownable: caller is not the owner'),
+          true
+        )
+      }
+    })
+
+    it('transferOwnership should emit OwnershipTransferred event', async () => {
+      const oldOwner = await contract.owner.call()
+      const res = await contract.transferOwnership(accounts[4], { from: oldOwner })
+      const newOwner = await contract.owner.call()
+      const txLog = res.logs[0]
+
+      assert.strictEqual(oldOwner, accounts[5])
+      assert.strictEqual(newOwner, accounts[4])
+      assert.strictEqual(txLog.event, 'OwnershipTransferred')
+      assert.strictEqual(txLog.args.previousOwner, oldOwner)
+      assert.strictEqual(txLog.args.newOwner, newOwner)
+    })
+
+    it('renounceOwnership can be done only by owner', async () => {
+      try {
+        await contract.renounceOwnership({ from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('Ownable: caller is not the owner'),
+          true
+        )
+      }
+    })
+
+    it('renounceOwnership should move owner to zero address', async () => {
+      const oldOwner = await contract.owner.call()
+      const res = await contract.renounceOwnership({ from: oldOwner })
+      const newOwner = await contract.owner.call()
+      const txLog = res.logs[0]
+
+      assert.strictEqual(oldOwner, accounts[4])
+      assert.strictEqual(newOwner, ADDRESS_ZERO)
+      assert.strictEqual(txLog.event, 'OwnershipTransferred')
+      assert.strictEqual(txLog.args.previousOwner, oldOwner)
+      assert.strictEqual(txLog.args.newOwner, ADDRESS_ZERO)
+    })
+  })
 })
