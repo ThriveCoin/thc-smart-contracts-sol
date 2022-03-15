@@ -3,6 +3,7 @@
 /* eslint-env mocha */
 
 const assert = require('assert')
+const { promisify } = require('util')
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 const SECONDS_PER_DAY = 86400
 
@@ -22,6 +23,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -112,6 +114,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -187,6 +190,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -276,6 +280,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -413,6 +418,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -475,6 +481,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -510,6 +517,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -552,6 +560,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -592,6 +601,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -774,6 +784,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: false
     }
@@ -904,6 +915,7 @@ describe('ThriveCoinVestingSchedule', () => {
       cliffDuration_: 5,
       interval_: 4,
       claimed_: 0,
+      claimLimit_: 0,
       revokable_: false,
       immutableBeneficiary_: true
     }
@@ -972,6 +984,252 @@ describe('ThriveCoinVestingSchedule', () => {
       assert.strictEqual(txLog.event, 'OwnershipTransferred')
       assert.strictEqual(txLog.args.previousOwner, oldOwner)
       assert.strictEqual(txLog.args.newOwner, ADDRESS_ZERO)
+    })
+  })
+
+  contract('claim limit tests', (accounts) => {
+    const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+    const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
+
+    let erc20 = null
+    const startOfDay = Math.floor(Math.floor(Date.now() / 1000) / SECONDS_PER_DAY) * SECONDS_PER_DAY
+    const contractArgs = {
+      token_: '',
+      beneficiary_: accounts[1],
+      allocatedAmount_: 100,
+      startTime: startOfDay - 10 * SECONDS_PER_DAY,
+      duration_: 30,
+      cliffDuration_: 5,
+      interval_: 4,
+      claimed_: 0,
+      claimLimit_: 0,
+      revokable_: false,
+      immutableBeneficiary_: true
+    }
+    const sendRpc = promisify(web3.currentProvider.send).bind(web3.currentProvider)
+
+    before(async () => {
+      erc20 = await ThriveCoinERC20Token.deployed()
+      contractArgs.token_ = erc20.address
+    })
+
+    it('if claim limit is zero then there is no limit', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(26, { from: contractArgs.beneficiary_ })
+    })
+
+    it('if claim limit is passed the call should fail', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.claim(26, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: amount exceeds claim limit'),
+          true
+        )
+      }
+    })
+
+    it('funds can be claimed if limit is not reached', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(18, { from: contractArgs.beneficiary_ })
+    })
+
+    it('can claim up to limit', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(20, { from: contractArgs.beneficiary_ })
+    })
+
+    it('limit can be changed', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.claim(26, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: amount exceeds claim limit'),
+          true
+        )
+      }
+
+      await contract.changeClaimLimit(26, { from: accounts[0] })
+      await contract.claim(26, { from: contractArgs.beneficiary_ })
+    })
+
+    it('only owner can change limit', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.changeClaimLimit(26, { from: accounts[1] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('Ownable: caller is not the owner'),
+          true
+        )
+      }
+      await contract.changeClaimLimit(26, { from: accounts[0] })
+    })
+
+    it('daily claimed amount should be zero by default', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      const dailyClaimedAmount = await contract.dailyClaimedAmount.call()
+      assert.strictEqual(dailyClaimedAmount.toNumber(), 0)
+    })
+
+    it('daily claimed amount should be increased when amount is claimed', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      const dailyClaimedAmountBefore = await contract.dailyClaimedAmount.call()
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+      const dailyClaimedAmountAfter = await contract.dailyClaimedAmount.call()
+
+      assert.strictEqual(dailyClaimedAmountBefore.toNumber(), 0)
+      assert.strictEqual(dailyClaimedAmountAfter.toNumber(), 10)
+    })
+
+    it('if daily claim limit is passed the call should fail', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(16, { from: contractArgs.beneficiary_ })
+
+      try {
+        await contract.claim(10, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: amount exceeds claim limit'),
+          true
+        )
+      }
+    })
+
+    it('if day changes the limit should be reset', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await contract.claim(16, { from: contractArgs.beneficiary_ })
+
+      const dailyClaimedAmountToday = await contract.dailyClaimedAmount.call()
+      assert.strictEqual(dailyClaimedAmountToday.toNumber(), 16)
+
+      try {
+        await contract.claim(10, { from: contractArgs.beneficiary_ })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: amount exceeds claim limit'),
+          true
+        )
+      }
+
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_increaseTime', params: [SECONDS_PER_DAY], id: 0 })
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_mine', params: [], id: 0 })
+
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+      const dailyClaimedAmountTomorrow = await contract.dailyClaimedAmount.call()
+      assert.strictEqual(dailyClaimedAmountTomorrow.toNumber(), 10)
+    })
+
+    it('daily claimed amount should be reset when day changes', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+
+      const dailyClaimedAmountToday = await contract.dailyClaimedAmount.call()
+      assert.strictEqual(dailyClaimedAmountToday.toNumber(), 10)
+
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_increaseTime', params: [SECONDS_PER_DAY], id: 0 })
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_mine', params: [], id: 0 })
+
+      const dailyClaimedAmountTomorrow = await contract.dailyClaimedAmount.call()
+      assert.strictEqual(dailyClaimedAmountTomorrow.toNumber(), 0)
+    })
+
+    it('last claimed day should be set when claim occurs', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      const lastClaimedDayBefore = await contract.lastClaimedDay.call()
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+      const lastClaimedDayAfter = await contract.lastClaimedDay.call()
+
+      const blockNumber = await web3.eth.getBlockNumber()
+      const { timestamp } = await web3.eth.getBlock(blockNumber)
+
+      assert.strictEqual(lastClaimedDayBefore.toNumber(), 0)
+      assert.strictEqual(lastClaimedDayAfter.toNumber(), Math.floor(timestamp / SECONDS_PER_DAY))
+    })
+
+    it('last claimed day should be updated when day changes', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      const blockNumber = await web3.eth.getBlockNumber()
+      const { timestamp } = await web3.eth.getBlock(blockNumber)
+
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+      const lastClaimedDayBefore = await contract.lastClaimedDay.call()
+
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_increaseTime', params: [SECONDS_PER_DAY], id: 0 })
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_mine', params: [], id: 0 })
+
+      await contract.claim(10, { from: contractArgs.beneficiary_ })
+      const lastClaimedDayAfter = await contract.lastClaimedDay.call()
+
+      assert.strictEqual(lastClaimedDayBefore.toNumber(), Math.floor(timestamp / SECONDS_PER_DAY))
+      assert.strictEqual(lastClaimedDayAfter.toNumber(), Math.floor(timestamp / SECONDS_PER_DAY) + 1)
     })
   })
 })

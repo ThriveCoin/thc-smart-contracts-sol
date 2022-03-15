@@ -45,6 +45,9 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   bool private _revoked;
   bool private immutable _immutableBeneficiary;
   uint256 private _claimed;
+  uint256 private _claimLimit;
+  uint256 private _lastClaimedDay;
+  uint256 private _dailyClaimedAmount;
 
   constructor(
     address token_,
@@ -55,6 +58,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     uint256 cliffDuration_, // in days
     uint256 interval_, // in days
     uint256 claimed_, // already claimed, helpful for chain migrations
+    uint256 claimLimit_,
     bool revokable_,
     bool immutableBeneficiary_
   ) {
@@ -71,6 +75,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     _cliffDuration = cliffDuration_;
     _interval = interval_;
     _claimed = claimed_;
+    _claimLimit = claimLimit_;
     _revokable = revokable_;
     _immutableBeneficiary = immutableBeneficiary_;
     _revoked = false;
@@ -157,6 +162,19 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     uint256 availableBal = available();
     require(amount <= availableBal, "ThriveCoinVestingSchedule: amount exceeds available balance");
 
+    uint256 limit = claimLimit();
+    uint256 timestampInDays = block.timestamp / SECONDS_PER_DAY;
+    if (_lastClaimedDay != timestampInDays) {
+      _lastClaimedDay = timestampInDays;
+      _dailyClaimedAmount = 0;
+    }
+
+    require(
+      (amount + _dailyClaimedAmount) <= limit || limit == 0,
+      "ThriveCoinVestingSchedule: amount exceeds claim limit"
+    );
+
+    _dailyClaimedAmount += amount;
     _claimed += amount;
     emit VestingFundsClaimed(_token, _beneficiary, amount);
     SafeERC20.safeTransfer(IERC20(_token), _beneficiary, amount);
@@ -175,5 +193,22 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
 
     emit VestingBeneficiaryChanged(_token, _beneficiary, newBeneficiary);
     _beneficiary = newBeneficiary;
+  }
+
+  function claimLimit() public view virtual returns (uint256) {
+    return _claimLimit;
+  }
+
+  function changeClaimLimit(uint256 newClaimLimit) public virtual onlyOwner {
+    _claimLimit = newClaimLimit;
+  }
+
+  function lastClaimedDay() public view virtual returns (uint256) {
+    return _lastClaimedDay;
+  }
+
+  function dailyClaimedAmount() public view virtual returns (uint256) {
+    uint256 timestampInDays = block.timestamp / SECONDS_PER_DAY;
+    return timestampInDays == _lastClaimedDay ? _dailyClaimedAmount : 0;
   }
 }
