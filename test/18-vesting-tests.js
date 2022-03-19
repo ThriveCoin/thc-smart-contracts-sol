@@ -24,7 +24,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -115,7 +115,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -163,9 +163,9 @@ describe('ThriveCoinVestingSchedule', () => {
       assert.strictEqual(interval.toNumber(), contractArgs.interval_)
     })
 
-    it('should expose revokable for read access', async () => {
-      const revokable = await contract.revokable.call()
-      assert.strictEqual(revokable, contractArgs.revokable_)
+    it('should expose revocable for read access', async () => {
+      const revocable = await contract.revocable.call()
+      assert.strictEqual(revocable, contractArgs.revocable_)
     })
 
     it('should expose immutableBeneficiary for read access', async () => {
@@ -191,7 +191,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -281,7 +281,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -419,7 +419,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -482,7 +482,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -518,7 +518,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -561,7 +561,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -602,7 +602,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -785,7 +785,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: false
     }
 
@@ -916,7 +916,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
 
@@ -1003,7 +1003,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revokable_: false,
+      revocable_: false,
       immutableBeneficiary_: true
     }
     const sendRpc = promisify(web3.currentProvider.send).bind(web3.currentProvider)
