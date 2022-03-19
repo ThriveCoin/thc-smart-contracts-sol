@@ -54,7 +54,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   uint256 private _duration;
   uint256 private _cliffDuration;
   uint256 private _interval;
-  bool private immutable _revokable;
+  bool private immutable _revocable;
   bool private _revoked;
   bool private immutable _immutableBeneficiary;
   uint256 private _claimed;
@@ -72,7 +72,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     uint256 interval_, // in days
     uint256 claimed_, // already claimed, helpful for chain migrations
     uint256 claimLimit_,
-    bool revokable_,
+    bool revocable_,
     bool immutableBeneficiary_
   ) {
     require(token_ != address(0), "ThriveCoinVestingSchedule: token is zero address");
@@ -89,7 +89,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     _interval = interval_;
     _claimed = claimed_;
     _claimLimit = claimLimit_;
-    _revokable = revokable_;
+    _revocable = revocable_;
     _immutableBeneficiary = immutableBeneficiary_;
     _revoked = false;
   }
@@ -147,10 +147,10 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   }
 
   /**
-   * @dev Returns the flag specifying if the contract is revokable.
+   * @dev Returns the flag specifying if the contract is revocable.
    */
-  function revokable() public view virtual returns (bool) {
-    return _revokable;
+  function revocable() public view virtual returns (bool) {
+    return _revocable;
   }
 
   /**
@@ -221,7 +221,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   }
 
   /**
-   * @dev Withdraws funds from smart contract to beneficiary. Withdrawal is 
+   * @dev Withdraws funds from smart contract to beneficiary. Withdrawal is
    * allowed only if amount is less or equal to available amount and daily limit
    * is zero or greater/equal to amount.
    */
