@@ -52,3 +52,8 @@ npm run verify -- ThriveCoinERC20TokenPolygon --network mumbai
 npm run local-node
 npm test
 ```
+
+## Docs
+
+Smart contract docs can be found in solidity files and also as markdown files
+under [./docs/](./docs/) directory
