@@ -5,8 +5,14 @@ pragma solidity ^0.8.0;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
 /**
+ * @author vigan.abd
+ * @title ERC20 with fund locking capability
+ *
  * @dev Extension of {ERC20} that adds ability to lock funds to be spent only
  * by specific account
+ *
+ * NOTE: extends openzeppelin v4.3.2 ERC20 contract:
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.3.2/contracts/token/ERC20/ERC20.sol
  */
 abstract contract ERC20LockedFunds is ERC20 {
   /**
