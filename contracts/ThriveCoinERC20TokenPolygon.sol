@@ -19,7 +19,7 @@ import "./ERC20LockedFunds.sol";
  * action and total supply by default is 0 since funds are supposed to be
  * moved later from L1 chain.
  
- * Additionaly in difference from L1 chain, L2 implementation supports
+ * Additionally in difference from L1 chain, L2 implementation supports
  * `deposit`, `withdraw` and `updateChildChainManager` actions based on
  * recommendation from polygon docs
  * (https://docs.polygon.technology/docs/develop/ethereum-polygon/pos/mapping-assets#custom-child-token).
@@ -42,7 +42,7 @@ contract ThriveCoinERC20TokenPolygon is
   Ownable
 {
   /**
-   * @dev Denominaton of token
+   * @dev Denomination of token
    */
   uint8 private _decimals;
 

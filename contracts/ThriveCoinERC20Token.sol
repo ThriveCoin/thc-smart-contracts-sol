@@ -49,7 +49,7 @@ import "./ERC20LockedFunds.sol";
  */
 contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, ERC20LockedFunds, Ownable {
   /**
-   * @dev Denominaton of token
+   * @dev Denomination of token
    */
   uint8 private _decimals;
 
@@ -64,7 +64,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    * @param name_ - Name of the token that complies with IERC20 interface
    * @param symbol_ - Symbol of the token that complies with IERC20 interface
    * @param decimals_ - Denomination of the token that complies with IERC20 interface
-   * @param totalSupply_ - Total suplly of the token that complies with IERC20 interface
+   * @param totalSupply_ - Total supply of the token that complies with IERC20 interface
    * @param cap_ - Token supply max cap
    */
   constructor(

@@ -23,7 +23,7 @@ abstract contract ERC20LockedFunds is ERC20 {
 
   /**
    * @dev Emitted when funds of `owner` are unlocked from being spent only
-   * by `spender`. `amount` is the substracted from total locked amount!
+   * by `spender`. `amount` is the subtracted from total locked amount!
    */
   event UnlockedFunds(address indexed owner, address indexed spender, uint256 amount);
 
@@ -39,6 +39,8 @@ abstract contract ERC20LockedFunds is ERC20 {
 
   /**
    * @dev Returns the amount of locked tokens by `account`.
+   *
+   * @param account - Account whose locked balance will be checked
    */
   function lockedBalanceOf(address account) public view virtual returns (uint256) {
     return _lockedBalances[account];
@@ -47,6 +49,9 @@ abstract contract ERC20LockedFunds is ERC20 {
   /**
    * @dev Returns the remaining number of locked tokens that `spender` will be
    * allowed to spend on behalf of `owner`.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
    */
   function lockedBalancePerAccount(address owner, address spender) public view virtual returns (uint256) {
     return _lockedAccountBalanceMap[owner][spender];
@@ -57,6 +62,10 @@ abstract contract ERC20LockedFunds is ERC20 {
    * This `amount` does not override previous amount, it adds on top of it.
    *
    * Emits a {LockedFunds} event.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
+   * @param amount - The amount that will be locked
    */
   function lockAmount(
     address owner,
@@ -72,6 +81,10 @@ abstract contract ERC20LockedFunds is ERC20 {
    * This `amount` does not override previous amount, it adds on top of it.
    *
    * Emits a {LockedFunds} event.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
+   * @param amount - The amount that will be locked
    */
   function lockAmountFrom(
     address owner,
@@ -91,6 +104,10 @@ abstract contract ERC20LockedFunds is ERC20 {
    * This `amount` does not override previous locked balance, it reduces it.
    *
    * Emits a {UnlockedFunds} event.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
+   * @param amount - The amount that will be unlocked
    */
   function unlockAmount(
     address owner,
@@ -106,6 +123,10 @@ abstract contract ERC20LockedFunds is ERC20 {
    * This `amount` does not override previous locked balance, it adds on top of it.
    *
    * Emits a {LockedFunds} event.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
+   * @param amount - The amount that will be locked
    */
   function _lockAmount(
     address owner,
@@ -131,6 +152,10 @@ abstract contract ERC20LockedFunds is ERC20 {
    * This `amount` does not override previous locked balance, it reduces it.
    *
    * Emits a {UnlockedFunds} event.
+   *
+   * @param owner - Account from where the funds are locked
+   * @param spender - Account who locked the funds for spending
+   * @param amount - The amount that will be unlocked
    */
   function _unlockAmount(
     address owner,
@@ -154,7 +179,12 @@ abstract contract ERC20LockedFunds is ERC20 {
   }
 
   /**
-   * @dev See {ERC20-_beforeTokenTransfer}.
+   * @dev See {ERC20-_beforeTokenTransfer}. Overrides _beforeTokenTransfer by
+   * adding checks for locked balances.
+   *
+   * @param from - Account from where the funds will be sent
+   * @param to - Account that will receive funds
+   * @param amount - The amount that will be sent
    */
   function _beforeTokenTransfer(
     address from,

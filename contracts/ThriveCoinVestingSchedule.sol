@@ -210,7 +210,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   }
 
   /**
-   * @dev Returns the address of the current beneficiry.
+   * @dev Returns the address of the current beneficiary.
    *
    * @return address
    */
@@ -388,7 +388,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
 
   /**
    * @dev Revokes the contract. After revoking no more funds can be claimed and
-   * remaining amount is transfered back to contract owner
+   * remaining amount is transferred back to contract owner
    */
   function revoke() public virtual onlyOwner notRevoked {
     uint256 amount = allocatedAmount() - claimed();
