@@ -304,7 +304,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
-          err.message.includes('ERC20LockedFunds: amount exceeds balance allowed to be spent'), true
+          err.message.includes('ThriveCoinVestingSchedule: Contract is not fully initialized yet'), true
         )
       }
     })
@@ -314,7 +314,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const available = await contract.available.call()
       assert.strictEqual(available.toNumber(), 26)
@@ -334,7 +334,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const availableBefore = await contract.available.call()
       const claimedBefore = await contract.claimed.call()
@@ -363,7 +363,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       const res = await contract.claim(20, { from: contractArgs.beneficiary_ })
       const txLog = res.logs[0]
 
@@ -378,7 +378,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const availableBefore = await contract.available.call()
       const claimedBefore = await contract.claimed.call()
@@ -453,7 +453,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       await contract.claim(13, { from: contractArgs.beneficiary_ })
       const claimed1 = await contract.claimed.call()
@@ -532,7 +532,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const vested = await contract.vested.call()
@@ -575,7 +575,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const vested = await contract.vested.call()
@@ -611,12 +611,28 @@ describe.only('ThriveCoinVestingSchedule', () => {
       contractArgs.token_ = erc20.address
     })
 
+    it('should fail if funds are not transferred yet to contract', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+
+      try {
+        await contract.revoke({ from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: Contract is not fully initialized yet'), true
+        )
+      }
+    })
+
     it('should return remaining amount to owner', async () => {
       const contract = await ThriveCoinVestingSchedule.new(
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const revokedBefore = await contract.revoked.call()
@@ -646,7 +662,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const revokedBefore = await contract.revoked.call()
       const contractBalBefore = await erc20.balanceOf(contract.address)
@@ -671,7 +687,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 50 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(100, { from: contractArgs.beneficiary_ })
 
       const revokedBefore = await contract.revoked.call()
@@ -701,7 +717,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
 
       const res = await contract.revoke({ from: accounts[0] })
@@ -719,7 +735,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.revoke({ from: accounts[1] })
@@ -736,7 +752,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.revoke({ from: accounts[0] })
 
       try {
@@ -754,7 +770,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, revocable_: false }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.revoke({ from: accounts[0] })
@@ -771,7 +787,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(5, { from: contractArgs.beneficiary_ })
       await contract.revoke({ from: accounts[0] })
 
@@ -816,7 +832,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, immutableBeneficiary_: true }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
@@ -833,7 +849,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.changeBeneficiary(accounts[2], { from: accounts[1] })
@@ -850,7 +866,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       const res1 = await contract.claim(5, { from: contractArgs.beneficiary_ })
       const txLog1 = res1.logs[0]
 
@@ -885,7 +901,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(5, { from: contractArgs.beneficiary_ })
 
       await contract.changeBeneficiary(accounts[2], { from: accounts[0] })
@@ -1041,7 +1057,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(26, { from: contractArgs.beneficiary_ })
     })
 
@@ -1050,7 +1066,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.claim(26, { from: contractArgs.beneficiary_ })
@@ -1068,7 +1084,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(18, { from: contractArgs.beneficiary_ })
     })
 
@@ -1077,7 +1093,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(20, { from: contractArgs.beneficiary_ })
     })
 
@@ -1086,7 +1102,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.claim(26, { from: contractArgs.beneficiary_ })
@@ -1107,7 +1123,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       try {
         await contract.changeClaimLimit(26, { from: accounts[1] })
@@ -1126,7 +1142,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const dailyClaimedAmount = await contract.dailyClaimedAmount.call()
       assert.strictEqual(dailyClaimedAmount.toNumber(), 0)
@@ -1137,7 +1153,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const dailyClaimedAmountBefore = await contract.dailyClaimedAmount.call()
       await contract.claim(10, { from: contractArgs.beneficiary_ })
@@ -1152,7 +1168,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(16, { from: contractArgs.beneficiary_ })
 
       try {
@@ -1171,7 +1187,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
       await contract.claim(16, { from: contractArgs.beneficiary_ })
 
       const dailyClaimedAmountToday = await contract.dailyClaimedAmount.call()
@@ -1200,7 +1216,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       await contract.claim(10, { from: contractArgs.beneficiary_ })
 
@@ -1219,7 +1235,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const lastClaimedDayBefore = await contract.lastClaimedDay.call()
       await contract.claim(10, { from: contractArgs.beneficiary_ })
@@ -1237,7 +1253,7 @@ describe.only('ThriveCoinVestingSchedule', () => {
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, claimLimit_: 20 }),
         { from: accounts[0] }
       )
-      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+      await erc20.transfer(contract.address, contractArgs.allocatedAmount_, { from: accounts[0] })
 
       const blockNumber = await web3.eth.getBlockNumber()
       const { timestamp } = await web3.eth.getBlock(blockNumber)

@@ -331,6 +331,16 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   }
 
   /**
+   * @dev Returns the flag specifying that the contract is ready to be used.
+   * The function returns true only if the contract has enough balance for
+   * transferring total allocated amount - already claimed amount
+   */
+  function ready() public view virtual returns (bool) {
+    uint256 bal = IERC20(_token).balanceOf(address(this));
+    return bal >= _allocatedAmount - _claimed;
+  }
+
+  /**
    * @dev Calculates vested amount until specified timestamp.
    *
    * @param timestamp - Unix epoch time in seconds
@@ -365,6 +375,8 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
    * @param amount - Amount that will be claimed by beneficiary
    */
   function claim(uint256 amount) public virtual onlyBeneficiary notRevoked {
+    require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
+
     uint256 availableBal = available();
     require(amount <= availableBal, "ThriveCoinVestingSchedule: amount exceeds available balance");
 
@@ -391,6 +403,7 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
    * remaining amount is transferred back to contract owner
    */
   function revoke() public virtual onlyOwner notRevoked {
+    require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
     require(revocable(), "ThriveCoinVestingSchedule: contract is not revocable");
 
     uint256 amount = allocatedAmount() - claimed();

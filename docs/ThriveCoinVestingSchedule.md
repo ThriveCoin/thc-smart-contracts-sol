@@ -304,6 +304,20 @@ function revoked() public view virtual returns (uint256)
 **Returns**
 - `bool` 
 
+### ready
+Returns the flag specifying that the contract is ready to be used.
+The function returns true only if the contract has enough balance for
+transferring total allocated amount - already claimed amount
+```solidity
+function ready() public view virtual returns (bool)
+```
+
+**Arguments**
+- None
+
+**Returns**
+- `bool` 
+
 ### calcVestedAmount
 Calculates vested amount until specified timestamp.
 ```solidity
