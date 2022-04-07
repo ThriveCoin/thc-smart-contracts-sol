@@ -7,7 +7,7 @@ const { promisify } = require('util')
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000'
 const SECONDS_PER_DAY = 86400
 
-describe('ThriveCoinVestingSchedule', () => {
+describe.only('ThriveCoinVestingSchedule', () => {
   contract('constructor tests', (accounts) => {
     const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
     const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
@@ -570,7 +570,7 @@ describe('ThriveCoinVestingSchedule', () => {
       contractArgs.token_ = erc20.address
     })
 
-    it('should return remaing amount to be unlocked', async () => {
+    it('should return remaining amount to be unlocked', async () => {
       const contract = await ThriveCoinVestingSchedule.new(
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
@@ -602,7 +602,7 @@ describe('ThriveCoinVestingSchedule', () => {
       interval_: 4,
       claimed_: 0,
       claimLimit_: 0,
-      revocable_: false,
+      revocable_: true,
       immutableBeneficiary_: true
     }
 
@@ -611,7 +611,7 @@ describe('ThriveCoinVestingSchedule', () => {
       contractArgs.token_ = erc20.address
     })
 
-    it('should return remaing amount to owner', async () => {
+    it('should return remaining amount to owner', async () => {
       const contract = await ThriveCoinVestingSchedule.new(
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
         { from: accounts[0] }
@@ -745,6 +745,23 @@ describe('ThriveCoinVestingSchedule', () => {
       } catch (err) {
         assert.strictEqual(
           err.message.includes('ThriveCoinVestingSchedule: contract is revoked'), true
+        )
+      }
+    })
+
+    it('cannot be revoked if contract is not revocable', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY, revocable_: false }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 100, { from: accounts[0] })
+
+      try {
+        await contract.revoke({ from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: contract is not revocable'), true
         )
       }
     })
@@ -1007,10 +1024,16 @@ describe('ThriveCoinVestingSchedule', () => {
       immutableBeneficiary_: true
     }
     const sendRpc = promisify(web3.currentProvider.send).bind(web3.currentProvider)
+    let snapshotId = null
 
     before(async () => {
       erc20 = await ThriveCoinERC20Token.deployed()
       contractArgs.token_ = erc20.address
+      snapshotId = (await sendRpc({ jsonrpc: '2.0', method: 'evm_snapshot', params: [], id: 0 })).result
+    })
+
+    after(async () => {
+      await sendRpc({ jsonrpc: '2.0', method: 'evm_revert', params: [snapshotId], id: 0 })
     })
 
     it('if claim limit is zero then there is no limit', async () => {

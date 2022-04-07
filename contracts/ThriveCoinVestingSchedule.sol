@@ -391,6 +391,8 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
    * remaining amount is transferred back to contract owner
    */
   function revoke() public virtual onlyOwner notRevoked {
+    require(revocable(), "ThriveCoinVestingSchedule: contract is not revocable");
+
     uint256 amount = allocatedAmount() - claimed();
     address dest = owner();
     _revoked = true;
