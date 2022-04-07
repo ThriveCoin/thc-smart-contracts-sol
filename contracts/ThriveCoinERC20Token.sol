@@ -138,10 +138,16 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    * @param newOwner - The new owner of smart contract
    */
   function transferOwnership(address newOwner) public virtual override onlyOwner {
+    address oldOwner = owner();
+
     super.transferOwnership(newOwner);
     _setupRole(DEFAULT_ADMIN_ROLE, newOwner);
     _setupRole(MINTER_ROLE, newOwner);
     _setupRole(PAUSER_ROLE, newOwner);
+
+    renounceRole(DEFAULT_ADMIN_ROLE, oldOwner);
+    renounceRole(MINTER_ROLE, oldOwner);
+    renounceRole(PAUSER_ROLE, oldOwner);
   }
 
   /**

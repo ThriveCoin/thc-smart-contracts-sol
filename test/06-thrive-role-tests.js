@@ -308,10 +308,13 @@ describe('ThriveCoinERC20Token', () => {
       await contract.transferOwnership(accounts[4], { from: accounts[0] })
       const newOwner = await contract.owner.call()
 
-      const roleRes = await Promise.all([
+      const roleResOldOwner = await Promise.all([
         contract.hasRole.call(ADMIN_ROLE, oldOwner),
         contract.hasRole.call(MINTER_ROLE, oldOwner),
-        contract.hasRole.call(PAUSER_ROLE, oldOwner),
+        contract.hasRole.call(PAUSER_ROLE, oldOwner)
+      ])
+
+      const roleResNewOwner = await Promise.all([
         contract.hasRole.call(ADMIN_ROLE, newOwner),
         contract.hasRole.call(MINTER_ROLE, newOwner),
         contract.hasRole.call(PAUSER_ROLE, newOwner)
@@ -319,7 +322,8 @@ describe('ThriveCoinERC20Token', () => {
 
       assert.strictEqual(oldOwner === accounts[0], true)
       assert.strictEqual(newOwner === accounts[4], true)
-      assert.strictEqual(roleRes.every(r => r === true), true)
+      assert.ok(roleResOldOwner.every(r => r === false))
+      assert.ok(roleResNewOwner.every(r => r === true))
     })
 
     it('transferOwnership can be done only by owner', async () => {
