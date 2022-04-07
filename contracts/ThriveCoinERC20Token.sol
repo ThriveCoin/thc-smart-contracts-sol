@@ -8,7 +8,10 @@ import "./ERC20Blockable.sol";
 import "./ERC20LockedFunds.sol";
 
 /**
- * @dev Implementation of the THC ERC20 Token.
+ * @author vigan.abd
+ * @title ThriveCoin L1 ERC20 Token
+ *
+ * @dev Implementation of the THRIVE ERC20 Token.
  *
  * THRIVE is a dynamic supply cross chain ERC20 token that supports burning and
  * minting. The token is capped where `cap` is dynamic, but can only be
@@ -39,8 +42,15 @@ import "./ERC20LockedFunds.sol";
  * - blocking/unblocking accounts
  * - role management
  * - locking/unlocking funds
+ *
+ * NOTE: extends openzeppelin v4.3.2 contracts:
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.3.2/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v4.3.2/contracts/access/Ownable.sol
  */
 contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20Blockable, ERC20LockedFunds, Ownable {
+  /**
+   * @dev Denomination of token
+   */
   uint8 private _decimals;
 
   /**
@@ -51,6 +61,11 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    * once during construction. {cap} param is only decreasable and is expected
    * to decrease when additional blockchains are added.
    *
+   * @param name_ - Name of the token that complies with IERC20 interface
+   * @param symbol_ - Symbol of the token that complies with IERC20 interface
+   * @param decimals_ - Denomination of the token that complies with IERC20 interface
+   * @param totalSupply_ - Total supply of the token that complies with IERC20 interface
+   * @param cap_ - Token supply max cap
    */
   constructor(
     string memory name_,
@@ -71,20 +86,28 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    * NOTE: This information is only used for _display_ purposes: it in
    * no way affects any of the arithmetic of the contract, including
    * {IERC20-balanceOf} and {IERC20-transfer}.
+   *
+   * @return uint8
    */
   function decimals() public view virtual override returns (uint8) {
     return _decimals;
   }
 
   /**
-   * @dev See {ERC20DynamicCap-updateCap}
+   * @dev See {ERC20DynamicCap-updateCap}. Adds only owner restriction to
+   * updateCap action.
+   *
+   * @param cap_ - New cap, should be lower or equal to previous cap
    */
   function updateCap(uint256 cap_) public virtual override onlyOwner {
     super.updateCap(cap_);
   }
 
   /**
-   * @dev See {ERC20Blockable-_blockAccount}
+   * @dev See {ERC20Blockable-_blockAccount}. Adds admin only restriction to
+   * blockAccount action
+   *
+   * @param account - Account that will be blocked
    */
   function blockAccount(address account) public virtual {
     require(
@@ -95,7 +118,10 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20Blockable-_unblockAccount}
+   * @dev See {ERC20Blockable-_unblockAccount}. Adds admin only restriction to
+   * unblockAccount action
+   *
+   * @param account - Account that will be unblocked
    */
   function unblockAccount(address account) public virtual {
     require(
@@ -106,7 +132,10 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {Ownable-transferOwnership}
+   * @dev See {Ownable-transferOwnership}. Overrides action by adding also all
+   * roles to new owner
+   *
+   * @param newOwner - The new owner of smart contract
    */
   function transferOwnership(address newOwner) public virtual override onlyOwner {
     super.transferOwnership(newOwner);
@@ -117,13 +146,20 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
 
   /**
    * @dev Sets the value of `_decimals` field
+   *
+   * @param decimals_ - Denomination of the token that complies with IERC20 interface
    */
   function _setupDecimals(uint8 decimals_) internal virtual {
     _decimals = decimals_;
   }
 
   /**
-   * @dev See {ERC20-_beforeTokenTransfer}.
+   * @dev See {ERC20-_beforeTokenTransfer}. Adjust order of calls for extended
+   * parent contracts.
+   *
+   * @param from - Account from where the funds will be sent
+   * @param to - Account that will receive funds
+   * @param amount - The amount that will be sent
    */
   function _beforeTokenTransfer(
     address from,
@@ -134,14 +170,21 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
   }
 
   /**
-   * @dev See {ERC20DynamicCap-_mint}.
+   * @dev See {ERC20DynamicCap-_mint}. Adjust order of calls for extended
+   * parent contracts.
+   *
+   * @param account - Accounts where the minted funds will be sent
+   * @param amount - Amount that will be minted
    */
   function _mint(address account, uint256 amount) internal virtual override(ERC20, ERC20DynamicCap) {
     ERC20DynamicCap._mint(account, amount);
   }
 
   /**
-   * @dev See {ERC20DynamicCap-_updateCap}
+   * @dev See {ERC20DynamicCap-_updateCap}. Adds check for paused state to
+   * _updateCap method.
+   *
+   * @param cap_ - New cap, should be lower or equal to previous cap
    */
   function _updateCap(uint256 cap_) internal virtual override {
     require(!paused(), "ThriveCoinERC20Token: update cap while paused");

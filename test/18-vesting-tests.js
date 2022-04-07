@@ -300,7 +300,7 @@ describe('ThriveCoinVestingSchedule', () => {
       assert.strictEqual(available.toNumber(), 26)
 
       try {
-        await contract.claim(26, { from: contractArgs.beneficiary_ })
+        await contract.claim(26, { from: contractArgs.beneficiary_, gas: 500000 })
         throw new Error('Should not reach here')
       } catch (err) {
         assert.strictEqual(
