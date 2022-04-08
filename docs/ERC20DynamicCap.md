@@ -31,7 +31,6 @@ event CapUpdated(address indexed from, uint256 prevCap, uint256 newCap)
 ## Contract Methods
 - [constructor(uint256 cap_)](#constructor)
 - [cap()](#cap)
-- [updateCap(uint256 cap_)](#updateCap)
 - [_updateCap(uint256 cap_)](#_updateCap)
 - [_mint(address account, uint256 amount)](#_mint)
 
@@ -58,18 +57,6 @@ function cap() public view virtual returns (uint256)
 
 **Returns**
 - `uint256` 
-
-### updateCap
-Updates total supply cap by decreasing it
-```solidity
-function updateCap(uint256 cap_) public virtual
-```
-
-**Arguments**
-- `cap_<uint256>` - New cap, should be lower or equal to previous cap
-
-**Returns**
-- `void` 
 
 ### _updateCap
 Sets the value of the `cap`. This value can only be decreased further,

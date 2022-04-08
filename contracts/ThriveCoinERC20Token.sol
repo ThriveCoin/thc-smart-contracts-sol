@@ -99,8 +99,8 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param cap_ - New cap, should be lower or equal to previous cap
    */
-  function updateCap(uint256 cap_) public virtual override onlyOwner {
-    super.updateCap(cap_);
+  function updateCap(uint256 cap_) public virtual onlyOwner {
+    _updateCap(cap_);
   }
 
   /**

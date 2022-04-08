@@ -45,15 +45,6 @@ abstract contract ERC20DynamicCap is ERC20 {
   }
 
   /**
-   * @dev Updates total supply cap by decreasing it
-   *
-   * @param cap_ - New cap, should be lower or equal to previous cap
-   */
-  function updateCap(uint256 cap_) public virtual {
-    _updateCap(cap_);
-  }
-
-  /**
    * @dev Sets the value of the `cap`. This value can only be decreased
    * further, it can't be increased
    *
