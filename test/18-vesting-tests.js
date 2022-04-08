@@ -730,6 +730,36 @@ describe.only('ThriveCoinVestingSchedule', () => {
       assert.strictEqual(txLog.args.amount.toNumber(), 80)
     })
 
+    it('moves back to owner the whole contract balance', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 50 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 130, { from: accounts[0] })
+      await contract.claim(100, { from: contractArgs.beneficiary_ })
+
+      const revokedBefore = await contract.revoked.call()
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const beneficiaryBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.revoke({ from: accounts[0] })
+
+      const revokedAfter = await contract.revoked.call()
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const beneficiaryBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(revokedBefore, false)
+      assert.strictEqual(contractBalBefore.toNumber(), 30)
+      assert.strictEqual(beneficiaryBalBefore.toNumber(), 240)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999730)
+      assert.strictEqual(revokedAfter, true)
+      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(beneficiaryBalAfter.toNumber(), 240)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999760)
+    })
+
     it('can be triggered only by owner', async () => {
       const contract = await ThriveCoinVestingSchedule.new(
         ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),

@@ -406,11 +406,12 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
     require(revocable(), "ThriveCoinVestingSchedule: contract is not revocable");
 
+    uint256 contractBal = IERC20(_token).balanceOf(address(this));
     uint256 amount = allocatedAmount() - claimed();
     address dest = owner();
     _revoked = true;
     emit VestingFundsRevoked(_token, _beneficiary, dest, amount);
-    SafeERC20.safeTransfer(IERC20(_token), dest, amount);
+    SafeERC20.safeTransfer(IERC20(_token), dest, contractBal);
   }
 
   /**
