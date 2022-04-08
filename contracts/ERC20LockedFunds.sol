@@ -79,7 +79,7 @@ abstract contract ERC20LockedFunds is ERC20 {
     address owner,
     address spender,
     uint256 amount
-  ) public virtual {
+  ) external virtual {
     require(owner == _msgSender(), "ERC20LockedFunds: can lock only own funds");
     _lockAmount(owner, spender, amount);
   }
@@ -101,7 +101,7 @@ abstract contract ERC20LockedFunds is ERC20 {
     address owner,
     address spender,
     uint256 amount
-  ) public virtual {
+  ) external virtual {
     require(spender == _msgSender(), "ERC20LockedFunds: only spender can request lock");
     require(
       allowance(owner, spender) >= amount + _lockedAccountBalanceMap[owner][spender],
@@ -125,7 +125,7 @@ abstract contract ERC20LockedFunds is ERC20 {
     address owner,
     address spender,
     uint256 amount
-  ) public virtual {
+  ) external virtual {
     require(spender == _msgSender(), "ERC20LockedFunds: only spender can unlock funds");
     _unlockAmount(owner, spender, amount);
   }

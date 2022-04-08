@@ -94,7 +94,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * - the caller must have the `PAUSER_ROLE`.
    */
-  function pause() public virtual {
+  function pause() external virtual {
     require(hasRole(PAUSER_ROLE, _msgSender()), "ThriveCoinERC20TokenPolygon: must have pauser role to pause");
     _pause();
   }
@@ -108,7 +108,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * - the caller must have the `PAUSER_ROLE`.
    */
-  function unpause() public virtual {
+  function unpause() external virtual {
     require(hasRole(PAUSER_ROLE, _msgSender()), "ThriveCoinERC20TokenPolygon: must have pauser role to unpause");
     _unpause();
   }
@@ -145,7 +145,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param account - Account that will be blocked
    */
-  function blockAccount(address account) public virtual {
+  function blockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20TokenPolygon: caller must have admin role to block the account"
@@ -159,7 +159,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param account - Account that will be unblocked
    */
-  function unblockAccount(address account) public virtual {
+  function unblockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20TokenPolygon: caller must have admin role to unblock the account"

@@ -110,7 +110,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param account - Account that will be blocked
    */
-  function blockAccount(address account) public virtual {
+  function blockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to block the account"
@@ -124,7 +124,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param account - Account that will be unblocked
    */
-  function unblockAccount(address account) public virtual {
+  function unblockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to unblock the account"
