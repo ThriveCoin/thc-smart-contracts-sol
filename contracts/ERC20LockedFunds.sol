@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.13;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
 
@@ -160,7 +160,7 @@ abstract contract ERC20LockedFunds is ERC20 {
   }
 
   /**
-   * @dev Unlocks the `amount` from being sent only to `spender` over the 
+   * @dev Unlocks the `amount` from being sent only to `spender` over the
    * `owner` balance.
    * This `amount` does not override previous locked balance, it reduces it.
    *
