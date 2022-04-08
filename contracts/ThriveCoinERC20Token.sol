@@ -30,9 +30,9 @@ import "./ERC20LockedFunds.sol";
  * the funds will be lost forever and are not recoverable, this will cause to
  * decrease total supply additionally!
  *
- * Another key feature of THRIVE is ability to lock funds to be spend only by
+ * Another key feature of THRIVE is ability to lock funds to be send only to
  * specific accounts. This is achieved through `lockAmount` and `unlockAmount`
- * actions, where the first one is called by balance owner and second by spender.
+ * actions, where the first one is called by balance owner and second by receiver.
  *
  * Key features:
  * - burn
