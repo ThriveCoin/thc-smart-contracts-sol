@@ -92,8 +92,14 @@ function lockedBalancePerAccount(address owner, address spender) public view vir
 - `uint256` 
 
 ### lockAmount
-Locks the `amount` to be spent by `spender` over the caller's tokens.
+Locks the `amount` to be sent only to `spender` over the caller's tokens.
 This `amount` does not override previous amount, it adds on top of it.
+The locking guarantees that owner of funds can send the amount in any time in
+future to the spender and cannot send this amount to some other account.
+This action is different from approve function which gives allowance to 
+spend funds. This one just ensures that funds can't be sent somewhere else
+but does not allow the spender to receive them by himself, these funds still
+will be sent only by owner!
 Emits a {LockedFunds} event.
 ```solidity
 function lockAmount(address owner, address spender, uint256 amount) public virtual
@@ -101,15 +107,17 @@ function lockAmount(address owner, address spender, uint256 amount) public virtu
 
 **Arguments**
 - `owner<address>` - Account from where the funds are locked
-- `spender<address>` - Account who locked the funds for spending
+- `spender<address>` - Account to whom funds will be locked for sending later
 - `amount<uint256>` - The amount that will be locked
 
 **Returns**
 - `void` 
 
 ### lockAmountFrom
-Locks the `amount` to be spent by `spender`. This `amount` does not override
-previous amount, it adds on top of it.
+Locks the `amount` to be spent by `spender`.
+This `amount` does not override previous amount, it adds on top of it.
+This action ensures that allowed spender can fully spend the allowed funds
+and that the owner cannot use these funds to send them somewhere else.
 Emits a {LockedFunds} event.
 ```solidity
 function lockAmountFrom(address owner, address spender, uint256 amount) public virtual
@@ -124,7 +132,7 @@ function lockAmountFrom(address owner, address spender, uint256 amount) public v
 - `void` 
 
 ### unlockAmount
-Unlocks the `amount` from being spent by `caller` over the `owner` balance.
+Unlocks the `amount` from being sent only to `caller` over the `owner` balance.
 This `amount` does not override previous locked balance, it reduces it.
 Emits a {UnlockedFunds} event.
 ```solidity
@@ -133,14 +141,14 @@ function unlockAmount(address owner, address spender, uint256 amount) public vir
 
 **Arguments**
 - `owner<address>` - Account from where the funds are locked
-- `spender<address>` - Account who locked the funds for spending
+- `spender<address>` - Account to whom funds were locked
 - `amount<uint256>` - The amount that will be unlocked
 
 **Returns**
 - `void` 
 
 ### _lockAmount
-Locks the `amount` to be spent by `spender` over the `owner` balance.
+Locks the `amount` to sent only to `spender` over the `owner` balance.
 This `amount` does not override previous locked balance, it adds on top of it.
 Emits a {LockedFunds} event.
 ```solidity
@@ -149,14 +157,14 @@ function _lockAmount(address owner, address spender, uint256 amount) internal vi
 
 **Arguments**
 - `owner<address>` - Account from where the funds are locked
-- `spender<address>` - Account who locked the funds for spending
+- `spender<address>` - Account to whom funds will be locked for sending later
 - `amount<uint256>` - The amount that will be locked
 
 **Returns**
 - `void` 
 
 ### _unlockAmount
-Unlocks the `amount` from being spent by `spender` over the `owner` balance.
+Unlocks the `amount` from being sent only to `spender` over the `owner` balance.
 This `amount` does not override previous locked balance, it reduces it.
 Emits a {UnlockedFunds} event.
 ```solidity
@@ -165,7 +173,7 @@ function _unlockAmount(address owner, address spender, uint256 amount) internal 
 
 **Arguments**
 - `owner<address>` - Account from where the funds are locked
-- `spender<address>` - Account who locked the funds for spending
+- `spender<address>` - Account to whom funds were locked
 - `amount<uint256>` - The amount that will be unlocked
 
 **Returns**

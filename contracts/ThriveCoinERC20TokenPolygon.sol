@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+
+pragma solidity 0.8.13;
 
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
 import "openzeppelin-solidity/contracts/utils/Context.sol";
@@ -93,7 +94,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * - the caller must have the `PAUSER_ROLE`.
    */
-  function pause() public virtual {
+  function pause() external virtual {
     require(hasRole(PAUSER_ROLE, _msgSender()), "ThriveCoinERC20TokenPolygon: must have pauser role to pause");
     _pause();
   }
@@ -107,7 +108,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * - the caller must have the `PAUSER_ROLE`.
    */
-  function unpause() public virtual {
+  function unpause() external virtual {
     require(hasRole(PAUSER_ROLE, _msgSender()), "ThriveCoinERC20TokenPolygon: must have pauser role to unpause");
     _unpause();
   }
@@ -134,8 +135,8 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param cap_ - New cap, should be lower or equal to previous cap
    */
-  function updateCap(uint256 cap_) public virtual override onlyOwner {
-    super.updateCap(cap_);
+  function updateCap(uint256 cap_) external virtual onlyOwner {
+    _updateCap(cap_);
   }
 
   /**
@@ -144,7 +145,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param account - Account that will be blocked
    */
-  function blockAccount(address account) public virtual {
+  function blockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20TokenPolygon: caller must have admin role to block the account"
@@ -158,7 +159,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param account - Account that will be unblocked
    */
-  function unblockAccount(address account) public virtual {
+  function unblockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20TokenPolygon: caller must have admin role to unblock the account"
@@ -173,9 +174,14 @@ contract ThriveCoinERC20TokenPolygon is
    * @param newOwner - The new owner of smart contract
    */
   function transferOwnership(address newOwner) public virtual override onlyOwner {
+    address oldOwner = owner();
+
     super.transferOwnership(newOwner);
     _setupRole(DEFAULT_ADMIN_ROLE, newOwner);
     _setupRole(PAUSER_ROLE, newOwner);
+
+    renounceRole(DEFAULT_ADMIN_ROLE, oldOwner);
+    renounceRole(PAUSER_ROLE, oldOwner);
   }
 
   /**

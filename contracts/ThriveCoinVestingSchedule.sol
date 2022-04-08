@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+
+pragma solidity 0.8.13;
 
 import "openzeppelin-solidity/contracts/utils/Context.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
@@ -331,6 +332,16 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
   }
 
   /**
+   * @dev Returns the flag specifying that the contract is ready to be used.
+   * The function returns true only if the contract has enough balance for
+   * transferring total allocated amount - already claimed amount
+   */
+  function ready() public view virtual returns (bool) {
+    uint256 bal = IERC20(_token).balanceOf(address(this));
+    return bal >= _allocatedAmount - _claimed;
+  }
+
+  /**
    * @dev Calculates vested amount until specified timestamp.
    *
    * @param timestamp - Unix epoch time in seconds
@@ -365,6 +376,8 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
    * @param amount - Amount that will be claimed by beneficiary
    */
   function claim(uint256 amount) public virtual onlyBeneficiary notRevoked {
+    require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
+
     uint256 availableBal = available();
     require(amount <= availableBal, "ThriveCoinVestingSchedule: amount exceeds available balance");
 
@@ -391,11 +404,15 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
    * remaining amount is transferred back to contract owner
    */
   function revoke() public virtual onlyOwner notRevoked {
+    require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
+    require(revocable(), "ThriveCoinVestingSchedule: contract is not revocable");
+
+    uint256 contractBal = IERC20(_token).balanceOf(address(this));
     uint256 amount = allocatedAmount() - claimed();
     address dest = owner();
     _revoked = true;
     emit VestingFundsRevoked(_token, _beneficiary, dest, amount);
-    SafeERC20.safeTransfer(IERC20(_token), dest, amount);
+    SafeERC20.safeTransfer(IERC20(_token), dest, contractBal);
   }
 
   /**

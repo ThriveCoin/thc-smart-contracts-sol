@@ -1,6 +1,6 @@
 {
   "name": "thc-smart-contracts-sol",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "ThriveCoin Smart Contracts",
   "scripts": {
     "build": "truffle build",

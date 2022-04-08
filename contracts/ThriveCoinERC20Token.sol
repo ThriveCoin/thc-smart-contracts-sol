@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+
+pragma solidity 0.8.13;
 
 import "openzeppelin-solidity/contracts/token/ERC20/presets/ERC20PresetMinterPauser.sol";
 import "openzeppelin-solidity/contracts/access/Ownable.sol";
@@ -30,9 +31,9 @@ import "./ERC20LockedFunds.sol";
  * the funds will be lost forever and are not recoverable, this will cause to
  * decrease total supply additionally!
  *
- * Another key feature of THRIVE is ability to lock funds to be spend only by
+ * Another key feature of THRIVE is ability to lock funds to be send only to
  * specific accounts. This is achieved through `lockAmount` and `unlockAmount`
- * actions, where the first one is called by balance owner and second by spender.
+ * actions, where the first one is called by balance owner and second by receiver.
  *
  * Key features:
  * - burn
@@ -99,8 +100,8 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param cap_ - New cap, should be lower or equal to previous cap
    */
-  function updateCap(uint256 cap_) public virtual override onlyOwner {
-    super.updateCap(cap_);
+  function updateCap(uint256 cap_) external virtual onlyOwner {
+    _updateCap(cap_);
   }
 
   /**
@@ -109,7 +110,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param account - Account that will be blocked
    */
-  function blockAccount(address account) public virtual {
+  function blockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to block the account"
@@ -123,7 +124,7 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    *
    * @param account - Account that will be unblocked
    */
-  function unblockAccount(address account) public virtual {
+  function unblockAccount(address account) external virtual {
     require(
       hasRole(DEFAULT_ADMIN_ROLE, _msgSender()),
       "ThriveCoinERC20Token: caller must have admin role to unblock the account"
@@ -138,10 +139,16 @@ contract ThriveCoinERC20Token is ERC20PresetMinterPauser, ERC20DynamicCap, ERC20
    * @param newOwner - The new owner of smart contract
    */
   function transferOwnership(address newOwner) public virtual override onlyOwner {
+    address oldOwner = owner();
+
     super.transferOwnership(newOwner);
     _setupRole(DEFAULT_ADMIN_ROLE, newOwner);
     _setupRole(MINTER_ROLE, newOwner);
     _setupRole(PAUSER_ROLE, newOwner);
+
+    renounceRole(DEFAULT_ADMIN_ROLE, oldOwner);
+    renounceRole(MINTER_ROLE, oldOwner);
+    renounceRole(PAUSER_ROLE, oldOwner);
   }
 
   /**
