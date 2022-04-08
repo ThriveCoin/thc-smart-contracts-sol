@@ -135,7 +135,7 @@ contract ThriveCoinERC20TokenPolygon is
    *
    * @param cap_ - New cap, should be lower or equal to previous cap
    */
-  function updateCap(uint256 cap_) public virtual onlyOwner {
+  function updateCap(uint256 cap_) external virtual onlyOwner {
     _updateCap(cap_);
   }
 
