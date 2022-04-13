@@ -110,6 +110,7 @@ event VestingBeneficiaryChanged(address indexed token, address indexed oldBenefi
 - [changeClaimLimit(uint256 newClaimLimit)](#changeClaimLimit)
 - [lastClaimedDay()](#lastClaimedDay)
 - [dailyClaimedAmount()](#dailyClaimedAmount)
+- [refundExceedingBalance()](#refundExceedingBalance)
 
 ### constructor
 Initializes the vesting contract
@@ -419,3 +420,16 @@ function dailyClaimedAmount() public view virtual returns (uint256)
 
 **Returns**
 - `uint256` 
+
+### refundExceedingBalance
+Refunds contract balance that exceeds _allocatedAmount back to contract owner
+```solidity
+function refundExceedingBalance() public virtual onlyOwner
+```
+
+**Arguments**
+- None
+from now on
+
+**Returns**
+- `void`

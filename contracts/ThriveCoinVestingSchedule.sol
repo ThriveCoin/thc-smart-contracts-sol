@@ -465,4 +465,18 @@ contract ThriveCoinVestingSchedule is Context, Ownable {
     uint256 timestampInDays = block.timestamp / SECONDS_PER_DAY;
     return timestampInDays == _lastClaimedDay ? _dailyClaimedAmount : 0;
   }
+
+  /**
+   * @dev Refunds contract balance that exceeds _allocatedAmount back to
+   * contract owner
+   */
+  function refundExceedingBalance() public virtual onlyOwner {
+    require(ready(), "ThriveCoinVestingSchedule: Contract is not fully initialized yet");
+
+    uint256 maxClaimableAmount = allocatedAmount() - claimed();
+    uint256 contractBal = IERC20(_token).balanceOf(address(this));
+    uint256 amount = contractBal - maxClaimableAmount;
+    address dest = owner();
+    SafeERC20.safeTransfer(IERC20(_token), dest, amount);
+  }
 }
