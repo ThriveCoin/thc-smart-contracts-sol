@@ -832,6 +832,99 @@ describe('ThriveCoinVestingSchedule', () => {
     })
   })
 
+  contract('refund exceeding balance tests', (accounts) => {
+    const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
+    const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
+
+    let erc20 = null
+    const startOfDay = Math.floor(Math.floor(Date.now() / 1000) / SECONDS_PER_DAY) * SECONDS_PER_DAY
+    const contractArgs = {
+      token_: '',
+      beneficiary_: accounts[1],
+      allocatedAmount_: 100,
+      startTime: startOfDay,
+      duration_: 30,
+      cliffDuration_: 5,
+      interval_: 4,
+      claimed_: 0,
+      claimLimit_: 0,
+      revocable_: true,
+      immutableBeneficiary_: true
+    }
+
+    before(async () => {
+      erc20 = await ThriveCoinERC20Token.deployed()
+      contractArgs.token_ = erc20.address
+    })
+
+    it('should fail if funds are not transferred yet to contract', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 10 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+
+      try {
+        await contract.refundExceedingBalance({ from: accounts[0] })
+        throw new Error('Should not reach here')
+      } catch (err) {
+        assert.strictEqual(
+          err.message.includes('ThriveCoinVestingSchedule: Contract is not fully initialized yet'), true
+        )
+      }
+    })
+
+    it('moves difference from allocated amount back to owner from contract balance', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 50 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 130, { from: accounts[0] })
+
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const beneficiaryBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.refundExceedingBalance({ from: accounts[0] })
+
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const beneficiaryBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(contractBalBefore.toNumber(), 130)
+      assert.strictEqual(beneficiaryBalBefore.toNumber(), 0)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999870)
+      assert.strictEqual(contractBalAfter.toNumber(), 100)
+      assert.strictEqual(beneficiaryBalAfter.toNumber(), 0)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999900)
+    })
+
+    it('moves difference from allocated and already claimed amount back to owner from contract balance', async () => {
+      const contract = await ThriveCoinVestingSchedule.new(
+        ...Object.values({ ...contractArgs, startTime: startOfDay - 50 * SECONDS_PER_DAY }),
+        { from: accounts[0] }
+      )
+      await erc20.transfer(contract.address, 130, { from: accounts[0] })
+      await contract.claim(100, { from: contractArgs.beneficiary_ })
+
+      const contractBalBefore = await erc20.balanceOf(contract.address)
+      const beneficiaryBalBefore = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalBefore = await erc20.balanceOf(accounts[0])
+
+      await contract.refundExceedingBalance({ from: accounts[0] })
+
+      const contractBalAfter = await erc20.balanceOf(contract.address)
+      const beneficiaryBalAfter = await erc20.balanceOf(contractArgs.beneficiary_)
+      const ownerBalAfter = await erc20.balanceOf(accounts[0])
+
+      assert.strictEqual(contractBalBefore.toNumber(), 30)
+      assert.strictEqual(beneficiaryBalBefore.toNumber(), 100)
+      assert.strictEqual(ownerBalBefore.toNumber(), 999999770)
+      assert.strictEqual(contractBalAfter.toNumber(), 0)
+      assert.strictEqual(beneficiaryBalAfter.toNumber(), 100)
+      assert.strictEqual(ownerBalAfter.toNumber(), 999999800)
+    })
+  })
+
   contract('change beneficiary tests', (accounts) => {
     const ThriveCoinERC20Token = artifacts.require('ThriveCoinERC20Token')
     const ThriveCoinVestingSchedule = artifacts.require('ThriveCoinVestingSchedule')
