@@ -34,10 +34,10 @@ module.exports = async function (deployer, network, accounts) {
     const owner = accounts[0]
 
     const config = {
-      name_: 'ThriveCoinTEST3',
-      symbol_: 'THRIVETEST3',
+      name_: 'ThriveCoin',
+      symbol_: 'THRIVE',
       decimals_: 8,
-      cap_: '100000000000000000',
+      cap_: '800000000000000000',
       childChainManagerProxy_: '0xb5505a6d998549090530911180f38aC5130101c6'
     }
 
